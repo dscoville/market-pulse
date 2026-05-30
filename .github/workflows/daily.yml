@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: "Force-send the email regardless of threshold/cooldown (for testing)"
+        description: "Send a test email now, ignoring threshold/cooldown"
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: write
@@ -31,10 +31,11 @@ jobs:
       - name: Run Market Pulse
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
-          # Falls back to the owner's address so a test email works with only
-          # RESEND_API_KEY set. Once RESEND_AUDIENCE_ID is configured, the
-          # broadcast-to-subscribers path takes over and this is ignored.
+          # Broadcast to the subscriber list only on the scheduled run. A manual
+          # "Run workflow" sends a direct test email to EMAIL_TO instead, which
+          # works with Resend's shared sender (no domain verification, no need
+          # to be a contact in the Audience) — the most reliable way to test.
+          RESEND_AUDIENCE_ID: ${{ github.event_name == 'schedule' && secrets.RESEND_AUDIENCE_ID || '' }}
           EMAIL_TO: ${{ secrets.EMAIL_TO || 'davidscoville@gmail.com' }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           FORCE: ${{ inputs.force }}
