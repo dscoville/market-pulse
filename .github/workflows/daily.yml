@@ -32,7 +32,10 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          # Falls back to the owner's address so a test email works with only
+          # RESEND_API_KEY set. Once RESEND_AUDIENCE_ID is configured, the
+          # broadcast-to-subscribers path takes over and this is ignored.
+          EMAIL_TO: ${{ secrets.EMAIL_TO || 'davidscoville@gmail.com' }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           FORCE: ${{ inputs.force }}
         run: python -m market_pulse.main
