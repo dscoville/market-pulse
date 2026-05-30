@@ -1,0 +1,49 @@
+name: Market Pulse daily check
+
+on:
+  schedule:
+    # 21:30 UTC on weekdays — shortly after the US market close.
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force-send the email regardless of threshold/cooldown (for testing)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-pulse
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Market Pulse
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          FORCE: ${{ inputs.force }}
+        run: python -m market_pulse.main
+
+      - name: Persist cooldown state
+        run: |
+          if [[ -n "$(git status --porcelain state/)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add state/
+            git commit -m "chore: update alert cooldown state [skip ci]"
+            git push
+          else
+            echo "No state change — nothing to commit."
+          fi
