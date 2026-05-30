@@ -45,10 +45,6 @@
 
   /* hero */
   header { padding: 92px 0 8px; text-align: center; }
-  .eyebrow {
-    font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--muted);
-  }
   h1 {
     font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
     font-weight: 400;
@@ -73,21 +69,8 @@
   /* lede */
   .lede { text-align: center; font-size: 19px; margin: 56px auto 8px; max-width: 580px; }
   .lede b { font-weight: 500; }
-  .silence { text-align: center; color: var(--muted); margin: 0 auto 16px; max-width: 540px; }
 
   hr.rule { border: 0; border-top: 1px solid var(--line); margin: 56px 0; }
-
-  /* conviction scale */
-  .scale { margin: 8px 0; }
-  .bar {
-    height: 8px; border-radius: 999px;
-    background: linear-gradient(90deg, var(--fear) 0%, #b8b2a2 50%, var(--greed) 100%);
-  }
-  .ticks { display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px; color: var(--muted); }
-  .ticks b { display: block; font-size: 13px; color: var(--ink); }
-  .ticks .l { text-align: left; }
-  .ticks .c { text-align: center; }
-  .ticks .r { text-align: right; }
 
   /* stance cards */
   .cards { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 0; }
@@ -141,65 +124,48 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">Market Sentiment · For the Patient</div>
     <h1>Be Greedy</h1>
     <p class="subtitle">when others are fearful</p>
     <p class="quote">“Be fearful when others are greedy, and greedy when others are fearful.” — Warren Buffett</p>
   </header>
 
   <p class="lede">
-    We watch the broad US market and email you <b>only when things are genuinely
-    out of whack</b> — a fear-driven sell-off worth buying into, or a greed-driven
-    melt-up worth trimming.
+    We email you <b>only at genuine extremes</b> — a panic worth buying, or a
+    melt-up worth trimming. Never more than once a week.
+    <b>The silence is the feature.</b>
   </p>
-  <p class="silence">
-    The rest of the time, we stay quiet — which is most of the time.
-    Never more than one email a week. <b>The silence is the feature.</b>
-  </p>
-
-  <hr class="rule" />
-
-  <div class="scale">
-    <div class="bar"></div>
-    <div class="ticks">
-      <div class="l"><b>−100</b>extreme greed → be fearful</div>
-      <div class="c"><b>0</b>business as usual</div>
-      <div class="r"><b>+100</b>extreme fear → be greedy</div>
-    </div>
-  </div>
 
   <hr class="rule" />
 
   <div class="cards">
     <div class="card greed">
       <h3>Be Greedy</h3>
-      <p>The market is oversold and panicked. A buying window.</p>
+      <p>Oversold and panicked. A buying window.</p>
     </div>
     <div class="card flat">
       <h3>Stand Pat</h3>
-      <p>Nothing unusual. No email. Do nothing.</p>
+      <p>Nothing unusual. No email.</p>
     </div>
     <div class="card fear">
       <h3>Be Fearful</h3>
-      <p>The market is frothy and euphoric. Take a little off the top.</p>
+      <p>Frothy and euphoric. Trim a little.</p>
     </div>
   </div>
 
   <div class="signup">
     <h2>Get pinged at the extremes</h2>
-    <p class="sub">One signal engine, five indicators, a single conviction score. We only write when it matters.</p>
+    <p class="sub">One score. We only write when it matters.</p>
     <form id="signup-form" novalidate>
       <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required />
       <button type="submit" id="submit">Notify me</button>
     </form>
     <p class="msg" id="msg" role="status" aria-live="polite"></p>
-    <p class="fineprint">No spam. Unsubscribe anytime. Rare by design.</p>
+    <p class="fineprint">No spam. Unsubscribe anytime.</p>
   </div>
 
   <footer>
     <p class="disclaimer">
-      Not financial advice. Be Greedy is a heuristic on a broad index meant
-      to inform your own judgement — not an instruction to buy or sell anything.
+      Not financial advice — a heuristic on a broad index to inform your own judgement.
     </p>
     <p>Built with the <a href="https://github.com/dscoville/market-pulse">Be Greedy</a> signal engine.</p>
   </footer>
