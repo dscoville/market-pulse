@@ -99,6 +99,27 @@ All knobs are environment variables (see `.env.example`):
 
 ---
 
+## Landing page + signups
+
+There's a public landing page in [`docs/`](docs/index.html) (servable via
+**GitHub Pages → Settings → Pages → Source: `main` / `/docs`**) where visitors
+can subscribe with their email. Because the page is static, the email form
+POSTs to a small **Cloudflare Worker** ([`worker/`](worker/README.md)) that
+holds the Resend key and adds the address to a **Resend Audience** — so the API
+key never touches the browser.
+
+```
+docs/index.html (GitHub Pages)  ──POST {email}──▶  worker/  ──▶  Resend Audience
+```
+
+See [`worker/README.md`](worker/README.md) for the one-time deploy steps, then
+paste the Worker URL into `SUBSCRIBE_ENDPOINT` in `docs/index.html`.
+
+> The daily alert still goes to `EMAIL_TO`. Mailing the whole Audience is the
+> next milestone (read contacts from the Audience and send to each).
+
+---
+
 ## Roadmap
 
 - **P0 (this repo):** rare, high-conviction email alerts. ✅

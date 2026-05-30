@@ -1,0 +1,16 @@
+# Cloudflare Worker that backs the Market Pulse signup form.
+# Deploy with:  cd worker && npx wrangler deploy
+#
+# One-time setup:
+#   npx wrangler secret put RESEND_API_KEY       # your Resend API key
+#   npx wrangler secret put RESEND_AUDIENCE_ID    # target Resend Audience id
+#
+# ALLOW_ORIGIN is a plain var (not a secret) so it can live here. Set it to
+# your published landing-page origin to lock down who can call the endpoint.
+
+name = "market-pulse-subscribe"
+main = "src/subscribe.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+ALLOW_ORIGIN = "https://dscoville.github.io"
