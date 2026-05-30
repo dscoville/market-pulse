@@ -5,3 +5,7 @@ venv/
 .env
 .pytest_cache/
 .DS_Store
+
+# Cloudflare Worker / node tooling
+node_modules/
+.wrangler/

@@ -1,8 +1,9 @@
 """Runtime configuration, loaded from environment variables.
 
 Everything has a sensible default so the engine can run in "report only"
-mode with zero setup. Email sending only kicks in once RESEND_API_KEY and
-EMAIL_TO are provided.
+mode with zero setup. Email sending kicks in once a RESEND_API_KEY plus a
+destination is provided — either a RESEND_AUDIENCE_ID (the subscriber list,
+the way the service runs) or an explicit EMAIL_TO (handy for local testing).
 """
 
 from __future__ import annotations
@@ -34,10 +35,11 @@ def _get_bool(name: str, default: bool = False) -> bool:
 
 @dataclass
 class Config:
-    # Email delivery (Resend transactional API)
+    # Email delivery (Resend)
     resend_api_key: str | None
     email_from: str
-    email_to: list[str]
+    audience_id: str | None   # subscriber list — the service's primary path
+    email_to: list[str]       # explicit recipients — fallback for testing
 
     # Alert behaviour
     alert_threshold: float  # absolute composite score required to send an email
@@ -58,6 +60,7 @@ class Config:
             email_from=os.environ.get(
                 "EMAIL_FROM", "Market Pulse <onboarding@resend.dev>"
             ),
+            audience_id=os.environ.get("RESEND_AUDIENCE_ID") or None,
             email_to=recipients,
             alert_threshold=_get_float("ALERT_THRESHOLD", 60.0),
             min_corroborating=_get_int("MIN_CORROBORATING", 2),
@@ -68,5 +71,16 @@ class Config:
         )
 
     @property
+    def send_mode(self) -> str | None:
+        """How we'll deliver, or None if we can't. Audience wins if both set."""
+        if not self.resend_api_key:
+            return None
+        if self.audience_id:
+            return "broadcast"
+        if self.email_to:
+            return "direct"
+        return None
+
+    @property
     def can_send(self) -> bool:
-        return bool(self.resend_api_key) and bool(self.email_to)
+        return self.send_mode is not None

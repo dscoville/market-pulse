@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Market Pulse — What Would Warren Buffett Do?</title>
+<meta name="description" content="Get an email only when the market hits a genuine extreme — a fear-driven sell-off worth buying, or a greed-driven melt-up worth trimming. Never more than once a week. The silence is the feature." />
+
+<!-- Open Graph / social preview -->
+<meta property="og:title" content="Market Pulse — What Would Warren Buffett Do?" />
+<meta property="og:description" content="We email you only when the market is genuinely out of whack. The rest of the time, silence." />
+<meta property="og:type" content="website" />
+
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --ink: #e8eaed;
+    --muted: #9aa3b2;
+    --line: #262a33;
+    --greed: #2ecc71;   /* be greedy / buy */
+    --fear: #e74c3c;    /* be fearful / trim */
+    --accent: #f5c518;  /* buffett gold */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 50% -10%, #1a1f2b 0%, var(--bg) 60%);
+    color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 64px 0 8px; text-align: center; }
+  .logo { font-size: 15px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.1; margin: 18px 0 10px; }
+  .quote { color: var(--muted); font-style: italic; max-width: 540px; margin: 0 auto; }
+  .quote span { color: var(--accent); }
+
+  .lede { text-align: center; font-size: 19px; color: var(--ink); margin: 36px auto 8px; max-width: 600px; }
+  .lede b { color: #fff; }
+  .silence { text-align: center; color: var(--muted); margin: 0 auto 40px; max-width: 560px; }
+
+  /* conviction scale */
+  .scale { margin: 40px 0; }
+  .bar {
+    height: 12px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--fear) 0%, #6b7280 50%, var(--greed) 100%);
+  }
+  .ticks { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .ticks b { display: block; font-size: 13px; }
+  .ticks .l { text-align: left; color: var(--fear); }
+  .ticks .c { text-align: center; }
+  .ticks .r { text-align: right; color: var(--greed); }
+
+  /* stance cards */
+  .cards { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 40px 0; }
+  @media (min-width: 620px) { .cards { grid-template-columns: 1fr 1fr 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .card .dot { font-size: 22px; }
+  .card h3 { margin: 8px 0 4px; font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card.greed { border-top: 3px solid var(--greed); }
+  .card.fear  { border-top: 3px solid var(--fear); }
+  .card.flat  { border-top: 3px solid #6b7280; }
+
+  /* signup */
+  .signup { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 32px; margin: 48px 0; text-align: center; }
+  .signup h2 { margin: 0 0 6px; font-size: 24px; }
+  .signup p.sub { margin: 0 0 22px; color: var(--muted); }
+  form { display: flex; gap: 10px; max-width: 440px; margin: 0 auto; flex-wrap: wrap; }
+  input[type=email] {
+    flex: 1 1 220px; min-width: 0; padding: 14px 16px; font-size: 16px;
+    background: #0f1217; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 12px;
+  }
+  input[type=email]:focus { outline: none; border-color: var(--accent); }
+  button {
+    padding: 14px 22px; font-size: 16px; font-weight: 600;
+    background: var(--accent); color: #1a1300; border: 0; border-radius: 12px; cursor: pointer;
+    flex: 0 0 auto;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .msg { margin: 16px 0 0; font-size: 15px; min-height: 22px; }
+  .msg.ok { color: var(--greed); }
+  .msg.err { color: var(--fear); }
+  .fineprint { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0 64px; }
+  footer a { color: var(--muted); }
+  .disclaimer { max-width: 560px; margin: 0 auto 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">📈 Market Pulse</div>
+    <h1>What Would Warren Buffett Do?</h1>
+    <p class="quote">“Be <span>fearful</span> when others are greedy, and <span>greedy</span> when others are fearful.”</p>
+  </header>
+
+  <p class="lede">
+    We watch the broad US market and email you <b>only when things are genuinely
+    out of whack</b> — a fear-driven sell-off worth buying into, or a greed-driven
+    melt-up worth trimming.
+  </p>
+  <p class="silence">
+    The rest of the time, we stay quiet — which is most of the time.
+    Never more than one email a week. <b>The silence is the feature.</b>
+  </p>
+
+  <div class="scale">
+    <div class="bar"></div>
+    <div class="ticks">
+      <div class="l"><b>−100</b>extreme greed → be fearful</div>
+      <div class="c"><b>0</b>business as usual</div>
+      <div class="r"><b>+100</b>extreme fear → be greedy</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card greed">
+      <div class="dot">🟢</div>
+      <h3>BE GREEDY</h3>
+      <p>The market is oversold and panicked. A buying window.</p>
+    </div>
+    <div class="card flat">
+      <div class="dot">⚪️</div>
+      <h3>STAND PAT</h3>
+      <p>Nothing unusual. No email. Do nothing.</p>
+    </div>
+    <div class="card fear">
+      <div class="dot">🔴</div>
+      <h3>BE FEARFUL</h3>
+      <p>The market is frothy and euphoric. Take a little off the top.</p>
+    </div>
+  </div>
+
+  <div class="signup">
+    <h2>Get pinged at the extremes</h2>
+    <p class="sub">One signal engine, five indicators, a single conviction score. We only write when it matters.</p>
+    <form id="signup-form" novalidate>
+      <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+      <button type="submit" id="submit">Notify me</button>
+    </form>
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    <p class="fineprint">No spam. Unsubscribe anytime. Rare by design.</p>
+  </div>
+
+  <footer>
+    <p class="disclaimer">
+      ⚠️ Not financial advice. Market Pulse is a heuristic on a broad index meant
+      to inform your own judgement — not an instruction to buy or sell anything.
+    </p>
+    <p>Built with the <a href="https://github.com/dscoville/market-pulse">Market Pulse</a> signal engine.</p>
+  </footer>
+
+</div>
+
+<script>
+  // After deploying the Cloudflare Worker (see worker/README.md), paste its
+  // URL here, e.g. "https://market-pulse-subscribe.<your-subdomain>.workers.dev".
+  const SUBSCRIBE_ENDPOINT = "";
+
+  const form = document.getElementById("signup-form");
+  const emailInput = document.getElementById("email");
+  const submitBtn = document.getElementById("submit");
+  const msg = document.getElementById("msg");
+
+  function show(text, kind) {
+    msg.textContent = text;
+    msg.className = "msg " + kind;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+    if (!email || !emailInput.checkValidity()) {
+      show("Please enter a valid email address.", "err");
+      return;
+    }
+    if (!SUBSCRIBE_ENDPOINT) {
+      show("Signup isn't wired up yet — set SUBSCRIBE_ENDPOINT in index.html.", "err");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    show("Adding you…", "");
+    try {
+      const res = await fetch(SUBSCRIBE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        show("🎉 " + (data.message || "You're on the list."), "ok");
+        form.reset();
+      } else {
+        show(data.error || "Something went wrong. Try again.", "err");
+      }
+    } catch {
+      show("Network error. Please try again.", "err");
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

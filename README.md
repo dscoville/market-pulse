@@ -21,7 +21,8 @@ real extremes.
 ## How it works
 
 Every weekday after the US close, a GitHub Action pulls daily price history for
-the **S&P 500** and the **VIX** (keyless, from Stooq), then scores the market on
+the **S&P 500** and the **VIX** (keyless — from Stooq, falling back to Yahoo
+Finance if Stooq rate-limits the runner), then scores the market on
 a single conviction scale:
 
 ```
@@ -78,14 +79,26 @@ pytest
 
 ## Hosted setup (GitHub Actions)
 
+Market Pulse emails **a list of subscribers** — you're just the first name on
+it. When an alert fires it goes out as a Resend **Broadcast** to everyone in
+your Audience, each with their own unsubscribe link.
+
 1. **Get a Resend API key** at <https://resend.com/api-keys>. For testing you can
    send from `onboarding@resend.dev`; for production, verify your own domain.
-2. In the repo, go to **Settings → Secrets and variables → Actions** and add:
+2. **Create an Audience** at <https://resend.com/audiences> (this is the
+   subscriber list) and copy its **Audience ID**. Add yourself to it so you get
+   the alerts too.
+3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
-   - `EMAIL_TO` — e.g. `davidscoville@gmail.com`
+   - `RESEND_AUDIENCE_ID` — the Audience from step 2
    - `EMAIL_FROM` *(optional)* — e.g. `Market Pulse <alerts@yourdomain.com>`
-3. That's it. The `Market Pulse daily check` workflow runs weekday afternoons.
-   Use **Actions → Run workflow → force = true** to send a test email immediately.
+4. Under **Settings → Actions → General → Workflow permissions**, enable
+   **Read and write** so the Action can commit the cooldown state back.
+5. That's it. The `Market Pulse daily check` workflow runs weekday afternoons.
+   Use **Actions → Run workflow → force = true** to send a test alert immediately.
+
+> **Local testing without a list:** set `EMAIL_TO` (and no `RESEND_AUDIENCE_ID`)
+> to send a one-off email to yourself via `python -m market_pulse.main --force`.
 
 ### Tuning
 
@@ -96,6 +109,28 @@ All knobs are environment variables (see `.env.example`):
 | `ALERT_THRESHOLD` | `60` | Higher = rarer, stronger-conviction alerts |
 | `MIN_CORROBORATING` | `2` | Signals that must agree before alerting |
 | `COOLDOWN_DAYS` | `7` | Minimum gap between emails |
+
+---
+
+## Landing page + signups
+
+There's a public landing page in [`docs/`](docs/index.html) (servable via
+**GitHub Pages → Settings → Pages → Source: `main` / `/docs`**) where visitors
+can subscribe with their email. Because the page is static, the email form
+POSTs to a small **Cloudflare Worker** ([`worker/`](worker/README.md)) that
+holds the Resend key and adds the address to a **Resend Audience** — so the API
+key never touches the browser.
+
+```
+docs/index.html (GitHub Pages)  ──POST {email}──▶  worker/  ──▶  Resend Audience
+                                                                       │
+                            daily check ── if extreme ── Broadcast ────┘──▶ every subscriber
+```
+
+The same Audience is both ends of the loop: the landing page adds people to it,
+and the daily check broadcasts the alert to everyone on it. See
+[`worker/README.md`](worker/README.md) for the one-time deploy steps, then paste
+the Worker URL into `SUBSCRIBE_ENDPOINT` in `docs/index.html`.
 
 ---
 

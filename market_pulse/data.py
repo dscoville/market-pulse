@@ -1,38 +1,46 @@
 """Market data fetching. The only module that touches the network.
 
-Source: Stooq daily CSV (keyless, no API key required).
-  S&P 500 -> ^spx,  VIX -> ^vix
+Resilient by design: the daily prices come from one of several keyless
+sources, tried in order, so a single provider rate-limiting a cloud IP (Stooq
+routinely 200s an HTML "limit exceeded" page to GitHub runners) doesn't take
+the whole run down.
 
-Returns plain Python lists so the signal engine stays dependency-free and
-fully testable offline.
+  1. Stooq daily CSV       S&P 500 -> ^spx,   VIX -> ^vix
+  2. Yahoo Finance chart   S&P 500 -> ^GSPC,  VIX -> ^VIX
+
+The network calls are thin; the parsing is pure (``_parse_stooq_csv`` /
+``_parse_yahoo_chart``) so it stays dependency-free and testable offline.
 """
 
 from __future__ import annotations
 
 import csv
 import io
+import json
 import urllib.request
+from datetime import datetime, timezone
+
+# Browser-ish UA: Yahoo 403s the stdlib default, and it doesn't hurt Stooq.
+_UA = "Mozilla/5.0 (compatible; market-pulse/0.1; +https://github.com/dscoville/market-pulse)"
 
 STOOQ_URL = "https://stooq.com/q/d/l/?s={symbol}&i=d"
+STOOQ_SYMBOLS = {"sp500": "^spx", "vix": "^vix"}
 
-SYMBOLS = {
-    "sp500": "^spx",
-    "vix": "^vix",
-}
+YAHOO_URL = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/"
+    "{symbol}?range=2y&interval=1d"
+)
+YAHOO_SYMBOLS = {"sp500": "%5EGSPC", "vix": "%5EVIX"}  # %5E == '^'
 
 
-def fetch_closes(symbol_key: str, timeout: int = 30) -> tuple[list[str], list[float]]:
-    """Fetch (dates, closes) for a symbol, oldest first.
-
-    `symbol_key` may be a friendly name in SYMBOLS ("sp500", "vix") or a raw
-    Stooq symbol.
-    """
-    symbol = SYMBOLS.get(symbol_key, symbol_key)
-    url = STOOQ_URL.format(symbol=symbol)
-    req = urllib.request.Request(url, headers={"User-Agent": "market-pulse/0.1"})
+def _http_get(url: str, timeout: int) -> str:
+    req = urllib.request.Request(url, headers={"User-Agent": _UA})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        raw = resp.read().decode("utf-8")
+        return resp.read().decode("utf-8", "replace")
 
+
+def _parse_stooq_csv(raw: str) -> tuple[list[str], list[float]]:
+    """Parse Stooq's daily CSV. Returns ([], []) if it's not usable CSV."""
     dates: list[str] = []
     closes: list[float] = []
     for row in csv.DictReader(io.StringIO(raw)):
@@ -45,10 +53,62 @@ def fetch_closes(symbol_key: str, timeout: int = 30) -> tuple[list[str], list[fl
             continue
         dates.append(row.get("Date", ""))
         closes.append(close)
-
-    if not closes:
-        raise ValueError(
-            f"No usable data returned for '{symbol}'. "
-            f"Stooq may be rate-limiting or the symbol changed. URL: {url}"
-        )
     return dates, closes
+
+
+def _parse_yahoo_chart(raw: str) -> tuple[list[str], list[float]]:
+    """Parse Yahoo's v8 chart JSON. Returns ([], []) if it's not usable."""
+    doc = json.loads(raw)
+    result = (doc.get("chart") or {}).get("result") or []
+    if not result:
+        return [], []
+    res = result[0]
+    stamps = res.get("timestamp") or []
+    quote = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+    raw_closes = quote.get("close") or []
+    dates: list[str] = []
+    closes: list[float] = []
+    for ts, close in zip(stamps, raw_closes):
+        if close is None:  # Yahoo nulls out non-trading / missing days
+            continue
+        dates.append(datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d"))
+        closes.append(float(close))
+    return dates, closes
+
+
+def _fetch_stooq(symbol_key: str, timeout: int) -> tuple[list[str], list[float]]:
+    symbol = STOOQ_SYMBOLS.get(symbol_key, symbol_key)
+    return _parse_stooq_csv(_http_get(STOOQ_URL.format(symbol=symbol), timeout))
+
+
+def _fetch_yahoo(symbol_key: str, timeout: int) -> tuple[list[str], list[float]]:
+    symbol = YAHOO_SYMBOLS.get(symbol_key)
+    if symbol is None:  # only know how to map our own keys to Yahoo tickers
+        return [], []
+    return _parse_yahoo_chart(_http_get(YAHOO_URL.format(symbol=symbol), timeout))
+
+
+_PROVIDERS = (("Stooq", _fetch_stooq), ("Yahoo", _fetch_yahoo))
+
+
+def fetch_closes(symbol_key: str, timeout: int = 30) -> tuple[list[str], list[float]]:
+    """Fetch (dates, closes) for a symbol, oldest first.
+
+    Tries each provider in turn and returns the first that yields usable data,
+    so one source being down or rate-limited doesn't fail the run.
+    """
+    problems: list[str] = []
+    for name, provider in _PROVIDERS:
+        try:
+            dates, closes = provider(symbol_key, timeout)
+        except Exception as e:  # network/parse hiccup — try the next source
+            problems.append(f"{name}: {type(e).__name__}: {e}")
+            continue
+        if closes:
+            return dates, closes
+        problems.append(f"{name}: no usable rows (likely rate-limited)")
+
+    raise ValueError(
+        f"No usable data for '{symbol_key}' from any source. "
+        + " | ".join(problems)
+    )

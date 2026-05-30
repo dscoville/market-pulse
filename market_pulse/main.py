@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from . import data, report
 from .config import Config
-from .emailer import EmailError, send_email
+from .emailer import UNSUBSCRIBE_TOKEN, EmailError, send_broadcast, send_email
 from .signals import Assessment, evaluate
 from .state import cooldown_active, load_state, save_state
 
@@ -64,20 +64,34 @@ def run(cfg: Config, report_only: bool = False) -> int:
     if cfg.dry_run:
         print("DRY_RUN set — not actually sending.")
         return 0
-    if not cfg.can_send:
-        print("RESEND_API_KEY / EMAIL_TO not configured — cannot send.", file=sys.stderr)
+    if cfg.send_mode is None:
+        print(
+            "Cannot send: need RESEND_API_KEY plus either RESEND_AUDIENCE_ID "
+            "(the subscriber list) or EMAIL_TO (for testing).",
+            file=sys.stderr,
+        )
         return 0
 
     try:
-        result = send_email(
-            cfg.resend_api_key, cfg.email_from, cfg.email_to,
-            report.subject(a), report.render_html(a), text,
-        )
+        if cfg.send_mode == "broadcast":
+            # Email the whole subscriber list; Resend injects each contact's
+            # own unsubscribe link in place of the token.
+            html = report.render_html(a, unsubscribe_url=UNSUBSCRIBE_TOKEN)
+            broadcast_text = report.render_text(a, unsubscribe_url=UNSUBSCRIBE_TOKEN)
+            result = send_broadcast(
+                cfg.resend_api_key, cfg.email_from, cfg.audience_id,
+                report.subject(a), html, broadcast_text,
+            )
+        else:
+            result = send_email(
+                cfg.resend_api_key, cfg.email_from, cfg.email_to,
+                report.subject(a), report.render_html(a), text,
+            )
     except EmailError as e:
         print(f"error sending email: {e}", file=sys.stderr)
         return 1
 
-    print(f"sent: {result}")
+    print(f"sent ({cfg.send_mode}): {result}")
     state["last_alert_at"] = datetime.now(timezone.utc).isoformat()
     state["last_alert_score"] = round(a.score, 1)
     state["last_alert_action"] = a.action
