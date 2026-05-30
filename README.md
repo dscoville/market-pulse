@@ -21,7 +21,8 @@ real extremes.
 ## How it works
 
 Every weekday after the US close, a GitHub Action pulls daily price history for
-the **S&P 500** and the **VIX** (keyless, from Stooq), then scores the market on
+the **S&P 500** and the **VIX** (keyless — from Stooq, falling back to Yahoo
+Finance if Stooq rate-limits the runner), then scores the market on
 a single conviction scale:
 
 ```
