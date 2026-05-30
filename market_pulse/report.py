@@ -85,7 +85,7 @@ def render_html(a: Assessment, unsubscribe_url: str | None = None) -> str:
   <div style="max-width:560px;margin:0 auto;padding:28px;">
     <div style="background:#f1ede3;border:1px solid #d3cdbe;border-radius:6px;overflow:hidden;">
       <div style="background:#17160f;color:#e7e2d6;padding:30px 28px;">
-        <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#a9a394;">Be Greedy &middot; be greedy when others are fearful</div>
+        <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#a9a394;">be greedy when others are fearful</div>
         <div style="font-family:{_SERIF};font-size:40px;line-height:1.05;margin-top:12px;">{a.stance}</div>
         <div style="font-size:15px;margin-top:8px;color:#cac4b4;">{a.headline}</div>
       </div>
