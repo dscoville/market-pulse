@@ -24,6 +24,10 @@ RESEND_BASE = "https://api.resend.com"
 # unsubscribe link. It must appear in a Broadcast's content.
 UNSUBSCRIBE_TOKEN = "{{{RESEND_UNSUBSCRIBE_URL}}}"
 
+# Cloudflare fronts the Resend API and 403s the stdlib's default
+# "Python-urllib" User-Agent as a bot (error 1010). A normal UA gets through.
+_UA = "Mozilla/5.0 (compatible; market-pulse/0.1; +https://github.com/dscoville/market-pulse)"
+
 
 class EmailError(RuntimeError):
     pass
@@ -38,6 +42,7 @@ def _post(path: str, api_key: str, payload: dict, timeout: int) -> dict:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": _UA,
         },
     )
     try:
