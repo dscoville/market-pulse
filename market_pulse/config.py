@@ -60,7 +60,7 @@ class Config:
             # `or` (not get's default) so an empty EMAIL_FROM — which the
             # workflow passes when the secret is unset — still falls back.
             email_from=(
-                os.environ.get("EMAIL_FROM") or "Market Pulse <onboarding@resend.dev>"
+                os.environ.get("EMAIL_FROM") or "Be Greedy <onboarding@resend.dev>"
             ),
             audience_id=os.environ.get("RESEND_AUDIENCE_ID") or None,
             email_to=recipients,
