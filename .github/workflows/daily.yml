@@ -36,7 +36,9 @@ jobs:
           # works with Resend's shared sender (no domain verification, no need
           # to be a contact in the Audience) — the most reliable way to test.
           RESEND_AUDIENCE_ID: ${{ github.event_name == 'schedule' && secrets.RESEND_AUDIENCE_ID || '' }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO || 'davidscoville@gmail.com' }}
+          # Set the EMAIL_TO repo secret to your address to receive manual test
+          # emails. (Kept as a secret, not hardcoded, so it's not public.)
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           FORCE: ${{ inputs.force }}
         run: python -m market_pulse.main
