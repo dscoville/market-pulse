@@ -67,8 +67,11 @@
 
   /* email preview tabs */
   .preview { margin: 8px 0 0; text-align: center; }
-  .preview h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(30px, 5vw, 40px); margin: 0 0 6px; }
-  .preview .sub { color: var(--muted); margin: 0 auto 24px; max-width: 440px; }
+  .preview h2 {
+    font-family: inherit; font-weight: 700; font-size: 13px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 24px;
+  }
   .toggle { display: inline-flex; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 5px; margin-bottom: 28px; }
   .toggle button {
     padding: 9px 22px; font-size: 14px; font-weight: 500; font-family: inherit;
@@ -80,7 +83,7 @@
   /* the mock mirrors the real alert email */
   .mail {
     max-width: 480px; margin: 0 auto; background: var(--paper); color: var(--ink);
-    border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-align: left;
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left;
     box-shadow: 0 18px 50px rgba(23,22,15,.12); font-size: 14px;
   }
   .mail-head { background: var(--ink); color: var(--bg); padding: 22px 24px; }
@@ -89,7 +92,7 @@
   .mail-body { padding: 20px 24px; }
   .mail-body .lead { margin: 0 0 16px; line-height: 1.55; }
   .mail-gauge { display: flex; gap: 3px; margin: 0 0 16px; }
-  .mail-gauge span { flex: 1; text-align: center; font-size: 10px; line-height: 1.25; padding: 7px 2px; border-radius: 3px; background: #e3ddcd; color: #8a8576; }
+  .mail-gauge span { flex: 1; text-align: center; font-size: 10px; line-height: 1.25; padding: 7px 2px; border-radius: 6px; background: #e3ddcd; color: #8a8576; }
   .mail-gauge .now { color: #fff; font-weight: 600; }
   .mail.greed .mail-gauge .now { background: var(--greed); }
   .mail.fear  .mail-gauge .now { background: var(--fear); }
@@ -101,7 +104,7 @@
 
   /* signup */
   .signup {
-    background: var(--ink); color: var(--bg); border-radius: 6px;
+    background: var(--ink); color: var(--bg); border-radius: 16px;
     padding: 48px 40px; margin: 56px 0; text-align: center;
   }
   .signup h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; margin: 0 0 8px; font-size: clamp(32px, 6vw, 44px); line-height: 1.05; }
@@ -111,13 +114,13 @@
     flex: 1 1 220px; min-width: 0; padding: 15px 18px; font-size: 16px;
     font-family: inherit;
     background: #211f16; color: var(--bg);
-    border: 1px solid #3a382c; border-radius: 4px;
+    border: 1px solid #3a382c; border-radius: 10px;
   }
   input[type=email]::placeholder { color: #8a8576; }
   input[type=email]:focus { outline: none; border-color: var(--bg); }
   button {
     padding: 15px 26px; font-size: 16px; font-weight: 500; font-family: inherit;
-    background: var(--bg); color: var(--ink); border: 0; border-radius: 4px; cursor: pointer;
+    background: var(--bg); color: var(--ink); border: 0; border-radius: 10px; cursor: pointer;
     flex: 0 0 auto; transition: opacity .15s ease;
   }
   button:hover { opacity: 0.85; }
@@ -159,7 +162,6 @@
 
   <div class="preview">
     <h2>What an alert looks like</h2>
-    <p class="sub">No charts, no jargon — just the call and why, in plain English.</p>
 
     <div class="toggle" role="tablist">
       <button id="tab-greed" class="on" onclick="showMail('greed')">Be Greedy</button>
