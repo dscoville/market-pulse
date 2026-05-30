@@ -21,7 +21,7 @@ def subject(a: Assessment) -> str:
     return f"Market Pulse: stand pat (score {a.score:+.0f})"
 
 
-def render_text(a: Assessment) -> str:
+def render_text(a: Assessment, unsubscribe_url: str | None = None) -> str:
     lines = [
         "MARKET PULSE",
         "What Would Warren Buffett Do?",
@@ -46,10 +46,12 @@ def render_text(a: Assessment) -> str:
         "Not financial advice. This is a heuristic signal on a broad index,",
         "for your own judgement. Market Pulse only emails at genuine extremes.",
     ]
+    if unsubscribe_url:
+        lines += ["", f"Unsubscribe: {unsubscribe_url}"]
     return "\n".join(lines)
 
 
-def render_html(a: Assessment) -> str:
+def render_html(a: Assessment, unsubscribe_url: str | None = None) -> str:
     color = _ACTION_COLOR.get(a.action, "#57606a")
     rows = []
     for s in a.signals:
@@ -68,6 +70,10 @@ def render_html(a: Assessment) -> str:
             </tr>"""
         )
     as_of = f" &middot; as of {a.as_of}" if a.as_of else ""
+    unsub = (
+        f'<br><a href="{unsubscribe_url}" style="color:#8b949e;">Unsubscribe</a>'
+        if unsubscribe_url else ""
+    )
     return f"""<!doctype html>
 <html><body style="margin:0;background:#f6f8fa;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#24292f;">
   <div style="max-width:560px;margin:0 auto;padding:24px;">
@@ -91,7 +97,7 @@ def render_html(a: Assessment) -> str:
       </div>
       <div style="padding:14px 24px;background:#f6f8fa;border-top:1px solid #eaecef;color:#8b949e;font-size:12px;">
         Not financial advice &mdash; a heuristic signal on a broad index for your own judgement.
-        Market Pulse only emails at genuine extremes, and never more than once a week.
+        Market Pulse only emails at genuine extremes, and never more than once a week.{unsub}
       </div>
     </div>
   </div>
