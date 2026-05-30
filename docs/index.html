@@ -72,20 +72,39 @@
 
   hr.rule { border: 0; border-top: 1px solid var(--line); margin: 56px 0; }
 
-  /* stance cards */
-  .cards { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 0; }
-  @media (min-width: 620px) { .cards { grid-template-columns: 1fr 1fr 1fr; } }
-  .card {
-    background: var(--paper); border: 1px solid var(--line); border-radius: 4px;
-    padding: 24px 22px; border-top: 2px solid var(--line);
+  /* email preview tabs */
+  .preview { margin: 8px 0 0; text-align: center; }
+  .preview h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(30px, 5vw, 40px); margin: 0 0 6px; }
+  .preview .sub { color: var(--muted); margin: 0 auto 24px; max-width: 440px; }
+  .toggle { display: inline-flex; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 5px; margin-bottom: 28px; }
+  .toggle button {
+    padding: 9px 22px; font-size: 14px; font-weight: 500; font-family: inherit;
+    border-radius: 999px; border: 0; background: transparent; color: var(--muted);
+    cursor: pointer; transition: background .15s ease, color .15s ease;
   }
-  .card h3 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; margin: 0 0 6px; font-size: 26px; }
-  .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
-  .card.greed { border-top-color: var(--greed); }
-  .card.greed h3 { color: var(--greed); }
-  .card.fear  { border-top-color: var(--fear); }
-  .card.fear h3 { color: var(--fear); }
-  .card.flat  { border-top-color: #8d8775; }
+  .toggle button.on { background: var(--ink); color: var(--bg); }
+
+  /* the mock mirrors the real alert email */
+  .mail {
+    max-width: 480px; margin: 0 auto; background: var(--paper); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-align: left;
+    box-shadow: 0 18px 50px rgba(23,22,15,.12); font-size: 14px;
+  }
+  .mail-head { background: var(--ink); color: var(--bg); padding: 22px 24px; }
+  .mail-head .kicker { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #a9a394; }
+  .mail-head .stance { font-family: "Instrument Serif", Georgia, serif; font-size: 32px; line-height: 1.05; margin-top: 8px; }
+  .mail-body { padding: 20px 24px; }
+  .mail-body .lead { margin: 0 0 16px; line-height: 1.55; }
+  .mail-gauge { display: flex; gap: 3px; margin: 0 0 16px; }
+  .mail-gauge span { flex: 1; text-align: center; font-size: 10px; line-height: 1.25; padding: 7px 2px; border-radius: 3px; background: #e3ddcd; color: #8a8576; }
+  .mail-gauge .now { color: #fff; font-weight: 600; }
+  .mail.greed .mail-gauge .now { background: var(--greed); }
+  .mail.fear  .mail-gauge .now { background: var(--fear); }
+  .mail-why { list-style: none; padding: 0; margin: 0 0 16px; }
+  .mail-why li { padding: 8px 0; border-bottom: 1px solid #ddd7c8; line-height: 1.45; }
+  .mail-do { font-weight: 500; margin: 0; }
+  .mail-foot { padding: 14px 24px; background: var(--bg); border-top: 1px solid #ddd7c8; color: #8a8576; font-size: 11px; line-height: 1.5; }
+  [hidden] { display: none; }
 
   /* signup */
   .signup {
@@ -135,23 +154,6 @@
     <b>The silence is the feature.</b>
   </p>
 
-  <hr class="rule" />
-
-  <div class="cards">
-    <div class="card greed">
-      <h3>Be Greedy</h3>
-      <p>Oversold and panicked. A buying window.</p>
-    </div>
-    <div class="card flat">
-      <h3>Stand Pat</h3>
-      <p>Nothing unusual. No email.</p>
-    </div>
-    <div class="card fear">
-      <h3>Be Fearful</h3>
-      <p>Frothy and euphoric. Trim a little.</p>
-    </div>
-  </div>
-
   <div class="signup">
     <h2>Get pinged at the extremes</h2>
     <p class="sub">One score. We only write when it matters.</p>
@@ -161,6 +163,60 @@
     </form>
     <p class="msg" id="msg" role="status" aria-live="polite"></p>
     <p class="fineprint">No spam. Unsubscribe anytime.</p>
+  </div>
+
+  <div class="preview">
+    <h2>What an alert looks like</h2>
+    <p class="sub">No charts, no jargon — just the call and why, in plain English.</p>
+
+    <div class="toggle" role="tablist">
+      <button id="tab-greed" class="on" onclick="showMail('greed')">Be Greedy</button>
+      <button id="tab-fear" onclick="showMail('fear')">Be Fearful</button>
+    </div>
+
+    <!-- BE GREEDY mock -->
+    <div class="mail greed" id="mail-greed">
+      <div class="mail-head">
+        <div class="kicker">Be Greedy · be greedy when others are fearful</div>
+        <div class="stance">Be Greedy</div>
+      </div>
+      <div class="mail-body">
+        <p class="lead">Stocks have sold off hard and fear is running high — historically the kind of moment that rewards buyers. This is a rare “be greedy” signal.</p>
+        <div class="mail-gauge">
+          <span>Extreme<br>Greed</span><span>Greed</span><span>Normal</span><span>Fear</span>
+          <span class="now">▲ now<br>Extreme<br>Fear</span>
+        </div>
+        <ul class="mail-why">
+          <li>Down 30% from its 1-year high — a real sell-off; stocks are on sale.</li>
+          <li>Oversold (RSI 22) — heavy selling; momentum looks washed out.</li>
+          <li>Volatility is high (VIX 42) — real fear in the market.</li>
+        </ul>
+        <p class="mail-do">What this means for you: a window to consider buying while others are afraid.</p>
+      </div>
+      <div class="mail-foot">Not financial advice. We only email at genuine extremes, never more than once a week.</div>
+    </div>
+
+    <!-- BE FEARFUL mock -->
+    <div class="mail fear" id="mail-fear" hidden>
+      <div class="mail-head">
+        <div class="kicker">Be Greedy · be greedy when others are fearful</div>
+        <div class="stance">Be Fearful</div>
+      </div>
+      <div class="mail-body">
+        <p class="lead">The market is euphoric and stretched — the kind of greed that often comes before a pullback. A rare “be fearful” signal; consider taking a little off the top.</p>
+        <div class="mail-gauge">
+          <span class="now">▲ now<br>Extreme<br>Greed</span>
+          <span>Greed</span><span>Normal</span><span>Fear</span><span>Extreme<br>Fear</span>
+        </div>
+        <ul class="mail-why">
+          <li>Trading 14% above its 200-day average — stretched above its long-term trend.</li>
+          <li>Overbought (RSI 78) — buyers have piled in; momentum looks stretched.</li>
+          <li>Volatility is very low (VIX 11) — investors are calm, even complacent.</li>
+        </ul>
+        <p class="mail-do">What this means for you: a moment to be cautious — maybe trim, don’t chase.</p>
+      </div>
+      <div class="mail-foot">Not financial advice. We only email at genuine extremes, never more than once a week.</div>
+    </div>
   </div>
 
   <footer>
@@ -173,6 +229,15 @@
 </div>
 
 <script>
+  // Email-preview tab toggle.
+  function showMail(which) {
+    const greed = which === "greed";
+    document.getElementById("mail-greed").hidden = !greed;
+    document.getElementById("mail-fear").hidden = greed;
+    document.getElementById("tab-greed").classList.toggle("on", greed);
+    document.getElementById("tab-fear").classList.toggle("on", !greed);
+  }
+
   // After deploying the Cloudflare Worker (see worker/README.md), paste its
   // URL here, e.g. "https://market-pulse-subscribe.<your-subdomain>.workers.dev".
   const SUBSCRIBE_ENDPOINT = "https://market-pulse-subscribe.davidscoville.workers.dev";
