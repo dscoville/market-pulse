@@ -49,6 +49,16 @@ def test_email_to_routes_to_direct(monkeypatch):
     assert cfg.email_to == ["me@example.com", "you@example.com"]
 
 
+def test_empty_email_from_falls_back_to_default(monkeypatch):
+    # The workflow passes EMAIL_FROM="" when the secret is unset; the default
+    # must still apply, or Resend rejects an empty sender ("domain is invalid").
+    _clear_email_env(monkeypatch)
+    monkeypatch.setenv("RESEND_API_KEY", "re_test")
+    monkeypatch.setenv("EMAIL_FROM", "")
+    cfg = Config.from_env()
+    assert cfg.email_from == "Market Pulse <onboarding@resend.dev>"
+
+
 def test_audience_wins_when_both_set(monkeypatch):
     _clear_email_env(monkeypatch)
     monkeypatch.setenv("RESEND_API_KEY", "re_test")

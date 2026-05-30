@@ -57,8 +57,10 @@ class Config:
         recipients = [e.strip() for e in to_raw.split(",") if e.strip()]
         return cls(
             resend_api_key=os.environ.get("RESEND_API_KEY") or None,
-            email_from=os.environ.get(
-                "EMAIL_FROM", "Market Pulse <onboarding@resend.dev>"
+            # `or` (not get's default) so an empty EMAIL_FROM — which the
+            # workflow passes when the secret is unset — still falls back.
+            email_from=(
+                os.environ.get("EMAIL_FROM") or "Market Pulse <onboarding@resend.dev>"
             ),
             audience_id=os.environ.get("RESEND_AUDIENCE_ID") or None,
             email_to=recipients,
