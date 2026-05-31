@@ -1,4 +1,4 @@
-"""Market Pulse — a "What Would Warren Buffett Do" market-extreme alert service.
+"""Be Greedy — a "be greedy when others are fearful" market-extreme alert service.
 
 Be fearful when others are greedy, and greedy when others are fearful.
 This package fetches broad-market data, scores how "out of whack" the market

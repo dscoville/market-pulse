@@ -1,4 +1,4 @@
-# Market Pulse — signup Worker
+# Be Greedy — signup Worker
 
 A tiny [Cloudflare Worker](https://workers.cloudflare.com/) that backs the
 landing page's email form. It receives an email and adds it as a contact to a

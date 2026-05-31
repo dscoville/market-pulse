@@ -100,7 +100,7 @@ def run(cfg: Config, report_only: bool = False) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Market Pulse — Buffett-style market extreme alerts")
+    parser = argparse.ArgumentParser(description="Be Greedy — contrarian market extreme alerts")
     parser.add_argument("--report", action="store_true", help="print the assessment and exit (never send)")
     parser.add_argument("--force", action="store_true", help="ignore threshold + cooldown and send")
     parser.add_argument("--dry-run", action="store_true", help="run the send path but don't deliver")
