@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Methodology — Be Greedy</title>
+<meta name="description" content="Exactly how Be Greedy scores the market: five orthogonal signals, the piecewise-linear curves that map each to a sub-score, the composite, and the rules that decide when (and whether) an email goes out." />
+<meta name="robots" content="index,follow" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #e7e2d6;
+    --paper: #f1ede3;
+    --ink: #17160f;
+    --muted: #6f6a5d;
+    --line: #d3cdbe;
+    --greed: #4f6b4e;
+    --fear: #a8472e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+  /* hero */
+  header { padding: 72px 0 8px; }
+  .back { font-size: 13px; color: var(--muted); text-decoration: none; letter-spacing: .04em; }
+  .back:hover { color: var(--ink); }
+  h1 {
+    font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+    font-weight: 400; font-size: clamp(46px, 9vw, 82px); line-height: 0.96;
+    letter-spacing: -0.02em; margin: 22px 0 8px;
+  }
+  .standfirst { color: var(--muted); font-size: 19px; max-width: 600px; margin: 0; }
+
+  /* section scaffolding */
+  .eyebrow {
+    font-weight: 700; font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
+  }
+  h2 {
+    font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+    font-size: clamp(28px, 5vw, 38px); line-height: 1.08; margin: 0 0 14px;
+  }
+  h3 {
+    font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+    font-size: 24px; margin: 0 0 4px;
+  }
+  section { padding: 12px 0; }
+  hr.rule { border: 0; border-top: 1px solid var(--line); margin: 48px 0; }
+  p { margin: 0 0 16px; }
+  a { color: var(--ink); text-underline-offset: 2px; }
+  strong { font-weight: 600; }
+
+  code, .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.88em; background: #ded8c8; padding: 1px 6px; border-radius: 5px;
+  }
+  .formula {
+    display: block; background: var(--paper); border: 1px solid var(--line);
+    border-left: 3px solid var(--ink); border-radius: 8px;
+    padding: 14px 18px; margin: 0 0 20px;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 14px; line-height: 1.7; overflow-x: auto; white-space: pre;
+  }
+
+  /* signal cards */
+  .signal {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px 26px; margin: 0 0 18px;
+  }
+  .signal .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; margin-bottom: 10px; }
+  .signal .weight {
+    font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    color: var(--muted); margin-left: auto; white-space: nowrap;
+  }
+  .signal p { margin: 0 0 12px; font-size: 16px; }
+  .signal p:last-child { margin-bottom: 0; }
+
+  /* curve tables */
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 0; font-size: 13px; }
+  caption { text-align: left; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  th, td {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td:first-child, th:first-child { text-align: left; color: var(--muted); }
+  .pos { color: var(--greed); }
+  .neg { color: var(--fear); }
+
+  /* threshold list */
+  .tiers { list-style: none; padding: 0; margin: 0; }
+  .tiers li {
+    display: flex; gap: 16px; align-items: baseline;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  .tiers li:last-child { border-bottom: 0; }
+  .tiers .band {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+    font-weight: 600; min-width: 110px; white-space: nowrap;
+  }
+  .tiers .label { font-weight: 600; min-width: 130px; }
+  .tiers .desc { color: var(--muted); font-size: 15px; }
+
+  /* gate steps */
+  ol.gates { padding-left: 0; list-style: none; counter-reset: g; margin: 0; }
+  ol.gates li {
+    counter-increment: g; position: relative; padding: 0 0 18px 44px; margin: 0;
+  }
+  ol.gates li::before {
+    content: counter(g); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ink); color: var(--bg);
+    font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+  }
+  ol.gates li:not(:last-child)::after {
+    content: ""; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 2px; background: var(--line);
+  }
+
+  .callout {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 22px; margin: 0 0 16px; font-size: 15px; color: var(--muted);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer { color: var(--muted); font-size: 13px; padding: 24px 0 80px; }
+  footer a { color: var(--ink); }
+  .disclaimer { line-height: 1.6; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back" href="./">← Be Greedy</a>
+    <h1>How the number is made</h1>
+    <p class="standfirst">
+      Be Greedy compresses the state of the broad US market into a single
+      conviction score from <strong>−100 to +100</strong>. Here is exactly how —
+      the inputs, the math, and the rules that decide whether your inbox hears
+      from us at all. Nothing is hidden; the <a href="https://github.com/dscoville/market-pulse/blob/main/market_pulse/signals.py">scoring engine is open source</a>.
+    </p>
+  </header>
+
+  <hr class="rule" />
+
+  <!-- DATA -->
+  <section>
+    <p class="eyebrow">The inputs</p>
+    <h2>Two instruments, daily closes, no API keys</h2>
+    <p>
+      Every weekday after the US close we pull the daily closing-price history of
+      two things: the <strong>S&amp;P 500</strong> (the market) and the
+      <strong>VIX</strong> (its 30-day implied-volatility "fear gauge"). Data comes
+      from <a href="https://stooq.com">Stooq</a>, falling back to Yahoo Finance if
+      Stooq rate-limits the runner — both keyless, so there's no paid data
+      dependency. We keep roughly two years of history so the trailing windows
+      below are always fully populated.
+    </p>
+    <p>
+      The VIX is treated as a <em>nice-to-have</em>: if it can't be fetched, the
+      score is computed from the four price-based signals alone rather than failing
+      the run.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- SIGNALS -->
+  <section>
+    <p class="eyebrow">The five signals</p>
+    <h2>Each reading becomes a signed sub-score</h2>
+    <p>
+      The market is scored on five <strong>orthogonal</strong> signals — each
+      capturing a different facet of fear or greed, so no single noisy reading
+      dominates. Every raw reading is passed through a <strong>piecewise-linear
+      curve</strong> that maps it to a signed sub-score:
+    </p>
+    <p class="callout">
+      <strong>Sign convention.</strong> A <span class="pos">positive</span>
+      sub-score means <em>fear / cheapness</em> and leans toward <strong>buying</strong>.
+      A <span class="neg">negative</span> sub-score means <em>greed / richness</em>
+      and leans toward <strong>trimming</strong>. Readings between the listed knots
+      are linearly interpolated; beyond the ends they're clamped.
+    </p>
+
+    <!-- Signal 1: Drawdown -->
+    <div class="signal">
+      <div class="meta">
+        <h3>1 · Drawdown from the 1-year high</h3>
+        <span class="weight">range +0 … +55</span>
+      </div>
+      <p>How far below its trailing 252-trading-day high the index sits. Deep declines put great businesses on sale.</p>
+      <span class="formula">drawdown % = (last_close − max(last 252 closes)) / max(last 252 closes) × 100</span>
+      <table>
+        <caption>Reading (% off high) → sub-score</caption>
+        <tr><th>%&nbsp;off&nbsp;high</th><th>−40</th><th>−30</th><th>−20</th><th>−12</th><th>−7</th><th>−3</th><th>0</th></tr>
+        <tr><td>score</td><td class="pos">+55</td><td class="pos">+46</td><td class="pos">+33</td><td class="pos">+20</td><td class="pos">+9</td><td class="pos">+3</td><td>0</td></tr>
+      </table>
+      <p style="margin-top:12px;font-size:14px;color:var(--muted);">
+        Drawdown is always ≤ 0%, so this signal only ever adds to the <em>buy</em>
+        side — a deliberate Buffett tilt toward acting on fear, not euphoria.
+      </p>
+    </div>
+
+    <!-- Signal 2: RSI -->
+    <div class="signal">
+      <div class="meta">
+        <h3>2 · Momentum — 14-day RSI</h3>
+        <span class="weight">range +35 … −35</span>
+      </div>
+      <p>Wilder's Relative Strength Index over 14 days. Oversold readings flag panic selling; overbought readings flag crowd euphoria.</p>
+      <table>
+        <caption>RSI → sub-score</caption>
+        <tr><th>RSI</th><th>10</th><th>20</th><th>30</th><th>40</th><th>50</th><th>60</th><th>70</th><th>80</th><th>90</th></tr>
+        <tr><td>score</td><td class="pos">+35</td><td class="pos">+25</td><td class="pos">+13</td><td class="pos">+4</td><td>0</td><td class="neg">−4</td><td class="neg">−13</td><td class="neg">−25</td><td class="neg">−35</td></tr>
+      </table>
+    </div>
+
+    <!-- Signal 3: Trend -->
+    <div class="signal">
+      <div class="meta">
+        <h3>3 · Distance from the 200-day average</h3>
+        <span class="weight">range +24 … −24</span>
+      </div>
+      <p>How far price has stretched from its 200-day simple moving average. Far below trend is bargain territory; far above is stretched.</p>
+      <span class="formula">deviation % = (price − SMA₂₀₀) / SMA₂₀₀ × 100</span>
+      <table>
+        <caption>Deviation from SMA₂₀₀ → sub-score</caption>
+        <tr><th>dev&nbsp;%</th><th>−20</th><th>−12</th><th>−5</th><th>0</th><th>+5</th><th>+12</th><th>+20</th></tr>
+        <tr><td>score</td><td class="pos">+24</td><td class="pos">+15</td><td class="pos">+6</td><td>0</td><td class="neg">−6</td><td class="neg">−15</td><td class="neg">−24</td></tr>
+      </table>
+    </div>
+
+    <!-- Signal 4: Range position -->
+    <div class="signal">
+      <div class="meta">
+        <h3>4 · Position in the 52-week range</h3>
+        <span class="weight">range +13 … −13</span>
+      </div>
+      <p>Where the latest price sits between its trailing-year low (0%) and high (100%). Near the lows the crowd is fearful; near the highs, greedy.</p>
+      <span class="formula">position = (last − min(252)) / (max(252) − min(252))</span>
+      <table>
+        <caption>Range position → sub-score</caption>
+        <tr><th>position</th><th>0%</th><th>10%</th><th>30%</th><th>50%</th><th>70%</th><th>90%</th><th>100%</th></tr>
+        <tr><td>score</td><td class="pos">+13</td><td class="pos">+9</td><td class="pos">+3</td><td>0</td><td class="neg">−3</td><td class="neg">−9</td><td class="neg">−13</td></tr>
+      </table>
+    </div>
+
+    <!-- Signal 5: VIX -->
+    <div class="signal">
+      <div class="meta">
+        <h3>5 · Volatility — the VIX</h3>
+        <span class="weight">range +50 … −18</span>
+      </div>
+      <p>The latest VIX close. A spiking VIX is the market screaming; a sleepy VIX is complacency. Note the asymmetry — fear (high VIX) is rewarded more heavily than complacency (low VIX) is penalised.</p>
+      <table>
+        <caption>VIX level → sub-score</caption>
+        <tr><th>VIX</th><th>10</th><th>13</th><th>17</th><th>20</th><th>25</th><th>30</th><th>40</th><th>55</th></tr>
+        <tr><td>score</td><td class="neg">−18</td><td class="neg">−10</td><td>0</td><td class="pos">+7</td><td class="pos">+16</td><td class="pos">+26</td><td class="pos">+40</td><td class="pos">+50</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- COMPOSITE -->
+  <section>
+    <p class="eyebrow">The composite</p>
+    <h2>Sum, then clamp</h2>
+    <p>The five sub-scores are simply added and the total is clamped to the ±100 range.</p>
+    <span class="formula">composite = clamp( Σ sub-scores , −100 , +100 )</span>
+    <p>
+      The weights are deliberately <strong>asymmetric</strong>. The buy side
+      (drawdown +55, RSI +35, trend +24, range +13, VIX +50) can sum past +100
+      and clamp at the ceiling, while the sell side bottoms out around −90
+      (drawdown contributes nothing to greed). In plain terms: the model is built
+      to shout "be greedy" in a true panic more readily than it whispers
+      "be fearful" in a melt-up — by design.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- CLASSIFICATION -->
+  <section>
+    <p class="eyebrow">From score to stance</p>
+    <h2>Five bands</h2>
+    <ul class="tiers">
+      <li><span class="band pos">≥ +60</span><span class="label">Be Greedy</span><span class="desc">Blood in the streets — a buying window. <em>Emails.</em></span></li>
+      <li><span class="band pos">+40 … +59</span><span class="label">Lean In</span><span class="desc">Fear rising, value appearing. Below the alert threshold — no email.</span></li>
+      <li><span class="band">−39 … +39</span><span class="label">Stand Pat</span><span class="desc">Nothing out of whack. Do nothing.</span></li>
+      <li><span class="band neg">−40 … −59</span><span class="label">Trim a Little</span><span class="desc">Running rich. Below the alert threshold — no email.</span></li>
+      <li><span class="band neg">≤ −60</span><span class="label">Be Fearful</span><span class="desc">Euphoria running hot — consider taking some off the top. <em>Emails.</em></span></li>
+    </ul>
+    <p class="callout" style="margin-top:20px;">
+      <strong>Why the ±40 bands don't email.</strong> The classifier recognises a
+      "Lean In / Trim" middle ground, but the default <em>alert threshold is 60</em>
+      — so only genuine extremes (the ±60 bands) ever reach your inbox. The milder
+      tiers exist for reporting and tuning, not notification.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- WHEN EMAILS SEND -->
+  <section>
+    <p class="eyebrow">When an email actually sends</p>
+    <h2>Four gates, all must pass</h2>
+    <p>On the scheduled run, an alert goes out <strong>only if every one</strong> of these holds. Failing any one means silence.</p>
+    <ol class="gates">
+      <li>
+        <strong>It's an extreme.</strong> The stance is Be Greedy or Be Fearful
+        (not Stand Pat / HOLD).
+      </li>
+      <li>
+        <strong>The score clears the threshold.</strong>
+        <span class="mono">|composite| ≥ ALERT_THRESHOLD</span> (default <strong>60</strong>).
+      </li>
+      <li>
+        <strong>Enough signals corroborate.</strong> At least
+        <span class="mono">MIN_CORROBORATING</span> (default <strong>2</strong>)
+        individual signals point the same way as the composite, each with a
+        sub-score of magnitude <strong>≥ 8</strong>. One lone signal can't trip an
+        alert — the move has to be broad-based.
+      </li>
+      <li>
+        <strong>The cooldown is clear.</strong> No alert has gone out in the last
+        <span class="mono">COOLDOWN_DAYS</span> (default <strong>7</strong>). This is
+        the hard guarantee behind "never more than one email a week."
+      </li>
+    </ol>
+    <p class="callout">
+      <strong>The knobs.</strong> <span class="mono">ALERT_THRESHOLD</span>,
+      <span class="mono">MIN_CORROBORATING</span> and
+      <span class="mono">COOLDOWN_DAYS</span> are all environment variables — raise
+      the threshold for rarer, higher-conviction calls; lower it to hear more.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- CADENCE -->
+  <section>
+    <p class="eyebrow">Cadence &amp; delivery</p>
+    <h2>After the close, on weekdays</h2>
+    <p>
+      A GitHub Action runs at <strong>21:30 UTC, Monday–Friday</strong> — shortly
+      after the 4pm ET US close. It fetches the day's data, scores the market, and
+      applies the four gates above. When an alert fires it goes out as a single
+      broadcast to every subscriber, each with their own one-click unsubscribe link.
+    </p>
+    <p>
+      The cooldown timestamp is persisted between runs (committed back to the repo
+      as <span class="mono">state/last_alert.json</span>), so the once-a-week
+      guarantee survives even though each run starts on a fresh, ephemeral machine.
+    </p>
+  </section>
+
+  <hr class="rule" />
+
+  <footer>
+    <p class="disclaimer">
+      Not financial advice. Be Greedy is a transparent heuristic on a broad index,
+      meant to inform your own judgement — not an instruction to buy or sell
+      anything. Past extremes are no guarantee of future ones.
+    </p>
+    <p>
+      <a href="./">← Back to Be Greedy</a> &nbsp;·&nbsp;
+      <a href="https://github.com/dscoville/market-pulse/blob/main/market_pulse/signals.py">Read the engine source</a>
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
