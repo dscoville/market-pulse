@@ -1,4 +1,4 @@
-name: Market Pulse daily check
+name: Be Greedy daily check
 
 on:
   schedule:

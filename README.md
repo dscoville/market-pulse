@@ -1,10 +1,10 @@
-# Market Pulse 📈
+# Be Greedy 📈
 
-**What Would Warren Buffett Do?**
+**be greedy when others are fearful**
 
 > *"Be fearful when others are greedy, and greedy when others are fearful."* — Warren Buffett
 
-Market Pulse watches the broad US market and emails you **only when things are
+Be Greedy watches the broad US market and emails you **only when things are
 genuinely out of whack** — a fear-driven sell-off worth buying into, or a
 greed-driven melt-up worth trimming. The rest of the time it stays quiet, which
 is most of the time. That silence is the feature.
@@ -79,7 +79,7 @@ pytest
 
 ## Hosted setup (GitHub Actions)
 
-Market Pulse emails **a list of subscribers** — you're just the first name on
+Be Greedy emails **a list of subscribers** — you're just the first name on
 it. When an alert fires it goes out as a Resend **Broadcast** to everyone in
 your Audience, each with their own unsubscribe link.
 
@@ -91,10 +91,10 @@ your Audience, each with their own unsubscribe link.
 3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
    - `RESEND_AUDIENCE_ID` — the Audience from step 2
-   - `EMAIL_FROM` *(optional)* — e.g. `Market Pulse <alerts@yourdomain.com>`
+   - `EMAIL_FROM` *(optional)* — e.g. `Be Greedy <alerts@begreedy.io>` (the domain must be verified in Resend)
 4. Under **Settings → Actions → General → Workflow permissions**, enable
    **Read and write** so the Action can commit the cooldown state back.
-5. That's it. The `Market Pulse daily check` workflow runs weekday afternoons.
+5. That's it. The `Be Greedy daily check` workflow runs weekday afternoons.
    Use **Actions → Run workflow → force = true** to send a test alert immediately.
 
 > **Local testing without a list:** set `EMAIL_TO` (and no `RESEND_AUDIENCE_ID`)
