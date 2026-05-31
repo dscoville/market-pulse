@@ -1,5 +1,5 @@
 /**
- * Market Pulse — signup endpoint (Cloudflare Worker).
+ * Be Greedy — signup endpoint (Cloudflare Worker).
  *
  * Receives an email from the static landing page and stores it as a contact
  * in a Resend Audience. The Resend API key never leaves the server, so the

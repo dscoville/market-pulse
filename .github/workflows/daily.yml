@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run Market Pulse
+      - name: Run Be Greedy
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           # Broadcast to the subscriber list only on the scheduled run. A manual

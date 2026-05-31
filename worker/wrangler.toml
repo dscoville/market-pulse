@@ -1,4 +1,4 @@
-# Cloudflare Worker that backs the Market Pulse signup form.
+# Cloudflare Worker that backs the Be Greedy signup form.
 # Deploy with:  cd worker && npx wrangler deploy
 #
 # One-time setup:

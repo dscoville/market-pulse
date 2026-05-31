@@ -1,4 +1,4 @@
-"""The heart of Market Pulse: turn raw price history into one conviction score.
+"""The heart of Be Greedy: turn raw price history into one conviction score.
 
 The composite score runs from -100 to +100:
 
