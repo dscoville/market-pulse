@@ -49,17 +49,17 @@
     -webkit-mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
             mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
   }
-  /* a single layer of evenly-spaced parallel waves, tilted 45° and oversized
-     so the corners stay covered after rotation */
+  /* a dense field of tightly-spaced parallel waves (see waves.svg), tilted 45°
+     and oversized so the corners stay covered after rotation */
   .guilloche::before {
     content: ""; position: absolute; inset: -60%;
+    background-image: url("waves.svg");
     background-repeat: repeat;
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22460%22%20height%3D%22210%22%20viewBox%3D%220%200%20460%20210%22%3E%3Cpath%20d%3D%22M0%2C105.0%20q115.0%2C-150%20230.0%2C0%20t230.0%2C0%22%20fill%3D%22none%22%20stroke%3D%22%239c6b2f%22%20stroke-width%3D%221.0%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
     transform: rotate(-45deg);
-    animation: drift-a 70s linear infinite;
+    animation: drift-a 60s linear infinite;
   }
-  /* shift by one tile width along the (rotated) wave axis for a seamless loop */
-  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); } to { transform: rotate(-45deg) translateX(-460px); } }
+  /* shift by one wavelength (520px) for a seamless loop */
+  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); } to { transform: rotate(-45deg) translateX(-520px); } }
   @media (prefers-reduced-motion: reduce) {
     .guilloche::before { animation: none; }
   }
@@ -133,7 +133,18 @@
   .signup {
     background: var(--ink); color: var(--bg); border-radius: 16px;
     padding: 48px 40px; margin: 56px 0; text-align: center;
+    position: relative; overflow: hidden; isolation: isolate;
   }
+  /* let the engraving ghost through the dark card. screen lightens, so the
+     gold lines glow subtly over the dark fill (multiply would hide them). */
+  .signup::before {
+    content: ""; position: absolute; inset: -60%; z-index: 0;
+    background-image: url("waves.svg"); background-repeat: repeat;
+    transform: rotate(-45deg);
+    mix-blend-mode: screen; opacity: 0.5; pointer-events: none;
+    animation: drift-a 60s linear infinite;
+  }
+  .signup > * { position: relative; z-index: 1; }
   .signup h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; margin: 0 0 8px; font-size: clamp(32px, 6vw, 44px); line-height: 1.05; }
   .signup p.sub { margin: 0 0 28px; color: #b9b3a4; font-size: 16px; }
   form { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; flex-wrap: wrap; }
