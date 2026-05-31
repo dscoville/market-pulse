@@ -49,25 +49,19 @@
     -webkit-mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
             mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
   }
-  /* tilt the whole field 45° and oversize so the corners stay covered */
-  .guilloche::before, .guilloche::after {
+  /* a single layer of evenly-spaced parallel waves, tilted 45° and oversized
+     so the corners stay covered after rotation */
+  .guilloche::before {
     content: ""; position: absolute; inset: -60%;
     background-repeat: repeat;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22460%22%20height%3D%22210%22%20viewBox%3D%220%200%20460%20210%22%3E%3Cpath%20d%3D%22M0%2C105.0%20q115.0%2C-150%20230.0%2C0%20t230.0%2C0%22%20fill%3D%22none%22%20stroke%3D%22%239c6b2f%22%20stroke-width%3D%221.0%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
     transform: rotate(-45deg);
-  }
-  .guilloche::before {
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22420%22%20height%3D%2230%22%20viewBox%3D%220%200%20420%2030%22%3E%3Cpath%20d%3D%22M0%2C15.0%20q105.0%2C-11%20210.0%2C0%20t210.0%2C0%22%20fill%3D%22none%22%20stroke%3D%22%239c6b2f%22%20stroke-width%3D%220.8%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
-    animation: drift-a 60s linear infinite;
-  }
-  .guilloche::after {
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22480%22%20height%3D%2234%22%20viewBox%3D%220%200%20480%2034%22%3E%3Cpath%20d%3D%22M0%2C17.0%20q120.0%2C-13%20240.0%2C0%20t240.0%2C0%22%20fill%3D%22none%22%20stroke%3D%22%238a5a22%22%20stroke-width%3D%220.8%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
-    animation: drift-b 78s linear infinite;
+    animation: drift-a 70s linear infinite;
   }
   /* shift by one tile width along the (rotated) wave axis for a seamless loop */
-  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); }    to { transform: rotate(-45deg) translateX(-420px); } }
-  @keyframes drift-b { from { transform: rotate(-45deg) translateX(0); }    to { transform: rotate(-45deg) translateX(480px); } }
+  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); } to { transform: rotate(-45deg) translateX(-460px); } }
   @media (prefers-reduced-motion: reduce) {
-    .guilloche::before, .guilloche::after { animation: none; }
+    .guilloche::before { animation: none; }
   }
   .serif {
     font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
