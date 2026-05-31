@@ -130,22 +130,12 @@
   .mail-foot { padding: 14px 24px; background: var(--bg); border-top: 1px solid #ddd7c8; color: #8a8576; font-size: 11px; line-height: 1.5; }
   [hidden] { display: none; }
 
-  /* signup */
+  /* signup — slightly translucent so the page's background waves show
+     through the dark card, perfectly aligned with the rest of the page */
   .signup {
-    background: var(--ink); color: var(--bg); border-radius: 16px;
+    background: rgba(23, 22, 15, 0.92); color: var(--bg); border-radius: 16px;
     padding: 48px 40px; margin: 56px 0; text-align: center;
-    position: relative; overflow: hidden; isolation: isolate;
   }
-  /* let the engraving ghost through the dark card. screen lightens, so the
-     gold lines glow subtly over the dark fill (multiply would hide them). */
-  .signup::before {
-    content: ""; position: absolute; inset: -60%; z-index: 0;
-    background-image: url("waves.svg"); background-repeat: repeat;
-    transform: rotate(-45deg);
-    mix-blend-mode: screen; opacity: 0.5; pointer-events: none;
-    animation: drift 60s linear infinite;
-  }
-  .signup > * { position: relative; z-index: 1; }
   .signup h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; margin: 0 0 8px; font-size: clamp(32px, 6vw, 44px); line-height: 1.05; }
   .signup p.sub { margin: 0 0 28px; color: #b9b3a4; font-size: 16px; }
   form { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; flex-wrap: wrap; }
