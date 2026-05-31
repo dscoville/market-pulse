@@ -47,9 +47,9 @@
     content: ""; position: absolute; inset: -60%; background-repeat: repeat;
     background-image: url("waves.svg");
     transform: rotate(-45deg);
-    animation: drift-a 60s linear infinite;
+    animation: drift 60s linear infinite;
   }
-  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); } to { transform: rotate(-45deg) translateX(-520px); } }
+  @keyframes drift { from { background-position: 0 0; } to { background-position: -520px 0; } }
   @media (prefers-reduced-motion: reduce) { .guilloche::before { animation: none; } }
 
   .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px; }
