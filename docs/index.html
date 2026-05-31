@@ -56,10 +56,11 @@
     background-image: url("waves.svg");
     background-repeat: repeat;
     transform: rotate(-45deg);
-    animation: drift-a 60s linear infinite;
+    animation: drift 60s linear infinite;
   }
-  /* shift by one wavelength (520px) for a seamless loop */
-  @keyframes drift-a { from { transform: rotate(-45deg) translateX(0); } to { transform: rotate(-45deg) translateX(-520px); } }
+  /* scroll the texture (not the box) by one wavelength so the loop is
+     seamless and the box edges never come into view */
+  @keyframes drift { from { background-position: 0 0; } to { background-position: -520px 0; } }
   @media (prefers-reduced-motion: reduce) {
     .guilloche::before { animation: none; }
   }
@@ -142,7 +143,7 @@
     background-image: url("waves.svg"); background-repeat: repeat;
     transform: rotate(-45deg);
     mix-blend-mode: screen; opacity: 0.5; pointer-events: none;
-    animation: drift-a 60s linear infinite;
+    animation: drift 60s linear infinite;
   }
   .signup > * { position: relative; z-index: 1; }
   .signup h2 { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; margin: 0 0 8px; font-size: clamp(32px, 6vw, 44px); line-height: 1.05; }
@@ -176,7 +177,9 @@
   @media (max-width: 520px) {
     form { flex-direction: column; }
     input[type=email] { flex: 1 1 auto; width: 100%; }
-    button { width: 100%; }
+    form button { width: 100%; }
+    .toggle { max-width: 100%; }
+    .toggle button { padding: 9px 16px; }
   }
 </style>
 </head>
