@@ -11,6 +11,9 @@
 <meta property="og:description" content="We email you only when the market is genuinely out of whack. The rest of the time, silence." />
 <meta property="og:type" content="website" />
 
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" href="favicon.svg" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -36,6 +39,34 @@
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* guilloché background — thin golden-brown waves, like engraving on a
+     banknote / Amex card. Two layers at slightly different wavelengths drift
+     in opposite directions so they shimmer against each other. */
+  .guilloche {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: 0.14;
+    -webkit-mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
+            mask-image: radial-gradient(130% 120% at 50% 0%, #000 55%, transparent 100%);
+  }
+  .guilloche::before, .guilloche::after {
+    content: ""; position: absolute; inset: -10% -10%;
+    background-repeat: repeat;
+  }
+  .guilloche::before {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%227%22%20viewBox%3D%220%200%2046%207%22%3E%3Cpath%20d%3D%22M0%2C3.5%20q11.5%2C-1.5%2023.0%2C0%20t23.0%2C0%22%20fill%3D%22none%22%20stroke%3D%22%239c6b2f%22%20stroke-width%3D%220.7%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
+    animation: drift-a 26s linear infinite;
+  }
+  .guilloche::after {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2253%22%20height%3D%229%22%20viewBox%3D%220%200%2053%209%22%3E%3Cpath%20d%3D%22M0%2C4.5%20q13.25%2C-1.8%2026.5%2C0%20t26.5%2C0%22%20fill%3D%22none%22%20stroke%3D%22%238a5a22%22%20stroke-width%3D%220.7%22%20stroke-opacity%3D%221%22/%3E%3C/svg%3E");
+    animation: drift-b 34s linear infinite;
+  }
+  /* shift by one tile width (46 / 53px) so the loop is seamless */
+  @keyframes drift-a { from { transform: translateX(0); }      to { transform: translateX(-46px); } }
+  @keyframes drift-b { from { transform: translateX(0); }      to { transform: translateX(53px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .guilloche::before, .guilloche::after { animation: none; }
+  }
   .serif {
     font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
     font-weight: 400;
@@ -53,7 +84,7 @@
     letter-spacing: -0.02em;
     margin: 20px 0 6px;
   }
-  .subtitle { color: var(--muted); }
+  .subtitle { color: var(--ink); }
   .quote {
     color: var(--muted); font-style: italic; max-width: 480px;
     margin: 28px auto 0; font-size: 16px;
@@ -143,6 +174,7 @@
 </style>
 </head>
 <body>
+<div class="guilloche" aria-hidden="true"></div>
 <div class="wrap">
 
   <header>
