@@ -13,4 +13,4 @@ main = "src/subscribe.js"
 compatibility_date = "2026-01-01"
 
 [vars]
-ALLOW_ORIGIN = "https://dscoville.github.io"
+ALLOW_ORIGIN = "https://begreedy.io"
