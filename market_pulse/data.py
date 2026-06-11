@@ -18,6 +18,7 @@ import csv
 import io
 import json
 import re
+import sys
 import urllib.request
 from datetime import datetime, timezone
 
@@ -146,10 +147,25 @@ def _parse_fred_latest(csv_text: str) -> float | None:
 
 
 def fetch_cape(timeout: int = 30) -> float | None:
-    """Current Shiller CAPE. Returns None if the source is unavailable."""
+    """Current Shiller CAPE. Returns None (with a reason) if unavailable."""
     try:
-        return _parse_multpl_cape(_http_get(MULTPL_CAPE_URL, timeout))
-    except Exception:
+        html = _http_get(MULTPL_CAPE_URL, timeout)
+    except Exception as e:
+        print(f"CAPE: fetch failed — {type(e).__name__}: {e}", file=sys.stderr)
+        return None
+    v = _parse_multpl_cape(html)
+    if v is None:
+        has = "Shiller" in html
+        print(f"CAPE: page fetched ({len(html)} bytes, 'Shiller' present={has}) "
+              "but no value parsed", file=sys.stderr)
+    return v
+
+
+def _fred_latest(series: str, timeout: int) -> float | None:
+    try:
+        return _parse_fred_latest(_http_get(FRED_CSV_URL.format(series=series), timeout))
+    except Exception as e:
+        print(f"Buffett: FRED {series} fetch failed — {type(e).__name__}: {e}", file=sys.stderr)
         return None
 
 
@@ -159,11 +175,9 @@ def fetch_buffett_indicator(timeout: int = 30) -> float | None:
     Uses the Wilshire 5000 full-cap index (≈ total market value in $bn) over
     GDP ($bn), both from FRED's keyless CSV. Returns None on any failure.
     """
-    try:
-        will = _parse_fred_latest(_http_get(FRED_CSV_URL.format(series="WILL5000PRFC"), timeout))
-        gdp = _parse_fred_latest(_http_get(FRED_CSV_URL.format(series="GDP"), timeout))
-    except Exception:
-        return None
+    will = _fred_latest("WILL5000PRFC", timeout)
+    gdp = _fred_latest("GDP", timeout)
     if not will or not gdp:
+        print(f"Buffett: missing data (wilshire={will}, gdp={gdp})", file=sys.stderr)
         return None
     return will / gdp * 100.0
