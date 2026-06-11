@@ -33,14 +33,12 @@ def assess() -> Assessment:
     cape = data.fetch_cape()
     if cape is None:
         print("warning: Shiller CAPE unavailable; proceeding without it", file=sys.stderr)
-    buffett = data.fetch_buffett_indicator()
-    if buffett is None:
-        print("warning: Buffett Indicator unavailable; proceeding without it", file=sys.stderr)
 
-    return evaluate(
-        sp_closes, vix_closes=vix_closes, as_of=as_of,
-        cape=cape, buffett_indicator=buffett,
-    )
+    # The Buffett Indicator needs total US market cap; the free Wilshire 5000
+    # feed on FRED was discontinued (every series 404s), so we lean on CAPE for
+    # valuation until a reliable source is wired in. The engine still accepts a
+    # buffett_indicator value if one becomes available.
+    return evaluate(sp_closes, vix_closes=vix_closes, as_of=as_of, cape=cape)
 
 
 def decide(a: Assessment, cfg: Config, state: dict) -> tuple[bool, str]:
