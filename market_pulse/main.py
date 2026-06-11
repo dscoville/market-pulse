@@ -27,7 +27,20 @@ def assess() -> Assessment:
     except Exception as e:  # VIX is a nice-to-have; degrade gracefully
         print(f"warning: could not fetch VIX ({e}); proceeding without it", file=sys.stderr)
         vix_closes = None
-    return evaluate(sp_closes, vix_closes=vix_closes, as_of=as_of)
+
+    # Valuation gauges are slow-moving and best-effort: if a source is down we
+    # just leave that signal out rather than fail the run.
+    cape = data.fetch_cape()
+    if cape is None:
+        print("warning: Shiller CAPE unavailable; proceeding without it", file=sys.stderr)
+    buffett = data.fetch_buffett_indicator()
+    if buffett is None:
+        print("warning: Buffett Indicator unavailable; proceeding without it", file=sys.stderr)
+
+    return evaluate(
+        sp_closes, vix_closes=vix_closes, as_of=as_of,
+        cape=cape, buffett_indicator=buffett,
+    )
 
 
 def decide(a: Assessment, cfg: Config, state: dict) -> tuple[bool, str]:
