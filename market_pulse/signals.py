@@ -134,11 +134,22 @@ _TREND_CURVE = [(-20, 24), (-12, 15), (-5, 6), (0, 0), (5, -6), (12, -15), (20, 
 _RANGE_CURVE = [(0.0, 13), (0.1, 9), (0.3, 3), (0.5, 0), (0.7, -3), (0.9, -9), (1.0, -13)]
 _VIX_CURVE = [(10, -18), (13, -10), (17, 0), (20, 7), (25, 16), (30, 26), (40, 40), (55, 50)]
 
+# Valuation curves. Slow-moving "how expensive is the market" gauges — the
+# Buffett-flavoured heart of the engine. High readings => expensive => greed
+# => negative (lean TRIM / BE FEARFUL).
+#   Shiller CAPE: long-run mean ~17; dot-com peak ~44; 1929 peak ~33.
+_CAPE_CURVE = [(8, 30), (12, 20), (16, 8), (20, 0), (24, -8), (28, -16), (32, -26), (36, -36), (40, -46), (45, -52)]
+#   Buffett Indicator (total market cap / GDP, %): historic mean ~85; dot-com
+#   ~145; 2021 ~200; mid-2020s records ~210-240.
+_BUFFETT_CURVE = [(60, 25), (80, 12), (100, 0), (120, -10), (140, -20), (160, -28), (185, -36), (210, -44), (240, -52)]
+
 
 def evaluate(
     closes: list[float],
     vix_closes: list[float] | None = None,
     as_of: str = "",
+    cape: float | None = None,
+    buffett_indicator: float | None = None,
 ) -> Assessment:
     """Score the market from a list of daily S&P 500 closes (oldest -> newest)."""
     if len(closes) < 30:
@@ -184,6 +195,20 @@ def evaluate(
             "vix", "Volatility (VIX fear gauge)", f"{vix:.1f}",
             _interp(vix, _VIX_CURVE),
             "A spiking VIX is the market screaming; a sleepy VIX is complacency.",
+        ))
+
+    if cape is not None:
+        signals.append(Signal(
+            "cape", "Shiller CAPE (10-year P/E)", f"{cape:.0f}",
+            _interp(cape, _CAPE_CURVE),
+            "Shiller's 10-year P/E — high means stocks are dear versus a decade of earnings.",
+        ))
+
+    if buffett_indicator is not None:
+        signals.append(Signal(
+            "buffett", "Buffett Indicator (market cap / GDP)", f"{buffett_indicator:.0f}%",
+            _interp(buffett_indicator, _BUFFETT_CURVE),
+            "Total US market value versus GDP — Buffett's favourite gauge. Sky-high means expensive.",
         ))
 
     raw = sum(s.score for s in signals)

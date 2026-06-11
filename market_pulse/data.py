@@ -17,6 +17,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import urllib.request
 from datetime import datetime, timezone
 
@@ -112,3 +113,57 @@ def fetch_closes(symbol_key: str, timeout: int = 30) -> tuple[list[str], list[fl
         f"No usable data for '{symbol_key}' from any source. "
         + " | ".join(problems)
     )
+
+
+# --------------------------------------------------------------------------
+# Valuation gauges (slow-moving, best-effort, optional — like the VIX).
+# Parsing is pure so it's testable offline; the fetchers swallow failures and
+# return None so a flaky source can never take down the daily run.
+# --------------------------------------------------------------------------
+
+MULTPL_CAPE_URL = "https://www.multpl.com/shiller-pe"
+FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+
+
+def _parse_multpl_cape(html: str) -> float | None:
+    """Pull the current Shiller CAPE (PE10) out of a multpl.com page."""
+    m = re.search(r"Current Shiller PE Ratio:?\s*([0-9]+(?:\.[0-9]+)?)", html, re.I)
+    return float(m.group(1)) if m else None
+
+
+def _parse_fred_latest(csv_text: str) -> float | None:
+    """Most recent numeric value from a FRED CSV download (skips '.' gaps)."""
+    rows = csv_text.strip().splitlines()
+    for line in reversed(rows[1:]):  # skip the header row
+        parts = line.split(",")
+        if len(parts) < 2:
+            continue
+        try:
+            return float(parts[-1].strip())
+        except ValueError:
+            continue
+    return None
+
+
+def fetch_cape(timeout: int = 30) -> float | None:
+    """Current Shiller CAPE. Returns None if the source is unavailable."""
+    try:
+        return _parse_multpl_cape(_http_get(MULTPL_CAPE_URL, timeout))
+    except Exception:
+        return None
+
+
+def fetch_buffett_indicator(timeout: int = 30) -> float | None:
+    """Approximate Buffett Indicator (total US market cap / GDP, %).
+
+    Uses the Wilshire 5000 full-cap index (≈ total market value in $bn) over
+    GDP ($bn), both from FRED's keyless CSV. Returns None on any failure.
+    """
+    try:
+        will = _parse_fred_latest(_http_get(FRED_CSV_URL.format(series="WILL5000PRFC"), timeout))
+        gdp = _parse_fred_latest(_http_get(FRED_CSV_URL.format(series="GDP"), timeout))
+    except Exception:
+        return None
+    if not will or not gdp:
+        return None
+    return will / gdp * 100.0

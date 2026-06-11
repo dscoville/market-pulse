@@ -115,6 +115,22 @@ def _plain_signal(key: str, display: str) -> str:
         if v < 30:
             return f"Volatility is elevated (VIX {v:.0f}) — nerves are showing."
         return f"Volatility is high (VIX {v:.0f}) — real fear in the market."
+    if key == "cape":
+        if v >= 33:
+            return f"Shiller CAPE is {v:.0f} — stocks are historically very expensive (near dot-com / 1929 levels)."
+        if v >= 25:
+            return f"Shiller CAPE is {v:.0f} — valuations are rich versus history."
+        if v <= 15:
+            return f"Shiller CAPE is {v:.0f} — cheap versus a decade of earnings."
+        return f"Shiller CAPE is {v:.0f} — around its long-run average."
+    if key == "buffett":
+        if v >= 180:
+            return f"The Buffett Indicator (market value vs GDP) is ~{v:.0f}% — near record highs; historically very expensive."
+        if v >= 120:
+            return f"The Buffett Indicator is ~{v:.0f}% of GDP — on the expensive side of history."
+        if v <= 80:
+            return f"The Buffett Indicator is ~{v:.0f}% of GDP — cheap versus history."
+        return f"The Buffett Indicator is ~{v:.0f}% of GDP — around fair value."
     return ""
 
 
