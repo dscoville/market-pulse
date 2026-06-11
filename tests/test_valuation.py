@@ -54,6 +54,15 @@ def test_parse_multpl_cape():
     assert data._parse_multpl_cape("<html>no value here</html>") is None
 
 
+def test_parse_multpl_cape_tolerates_markup():
+    # The real page wraps the number in tags / line breaks after the label.
+    html = (
+        '<div id="current">Current Shiller PE Ratio:\n'
+        '  <strong>38.58</strong> <sup>+0.04 (0.10%)</sup></div>'
+    )
+    assert data._parse_multpl_cape(html) == 38.58
+
+
 def test_parse_fred_latest_skips_gaps():
     csv_text = "observation_date,GDP\n2025-01-01,29800.0\n2025-04-01,.\n"
     # most recent real value (the trailing '.' is a missing observation)

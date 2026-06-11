@@ -127,9 +127,23 @@ FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 
 
 def _parse_multpl_cape(html: str) -> float | None:
-    """Pull the current Shiller CAPE (PE10) out of a multpl.com page."""
-    m = re.search(r"Current Shiller PE Ratio:?\s*([0-9]+(?:\.[0-9]+)?)", html, re.I)
-    return float(m.group(1)) if m else None
+    """Pull the current Shiller CAPE (PE10) out of a multpl.com page.
+
+    The value sits right after the "Current Shiller PE Ratio" label but may be
+    wrapped in tags/whitespace, so strip tags in a small window and take the
+    first plausible number.
+    """
+    idx = html.find("Current Shiller PE Ratio")
+    if idx == -1:
+        idx = html.find("Shiller PE Ratio")
+    if idx == -1:
+        return None
+    window = re.sub(r"<[^>]+>", " ", html[idx:idx + 300])
+    m = re.search(r"([0-9]{1,3}(?:\.[0-9]+)?)", window)
+    if not m:
+        return None
+    val = float(m.group(1))
+    return val if 3 <= val <= 80 else None  # sanity-bound a real CAPE
 
 
 def _parse_fred_latest(csv_text: str) -> float | None:
@@ -169,15 +183,30 @@ def _fred_latest(series: str, timeout: int) -> float | None:
         return None
 
 
+# Wilshire 5000 candidates on FRED (≈ total US market value in $bn). The exact
+# series id has changed over time, so try a few and take the first that yields
+# a plausible market-cap-to-GDP ratio.
+_WILSHIRE_SERIES = ("WILL5000IND", "WILL5000PR", "WILL5000PRFC")
+
+
 def fetch_buffett_indicator(timeout: int = 30) -> float | None:
     """Approximate Buffett Indicator (total US market cap / GDP, %).
 
-    Uses the Wilshire 5000 full-cap index (≈ total market value in $bn) over
-    GDP ($bn), both from FRED's keyless CSV. Returns None on any failure.
+    Wilshire 5000 (≈ total market value in $bn) over GDP ($bn), both from FRED's
+    keyless CSV. Only accepts a result in a plausible range so a wrong-scale
+    series can't produce a bogus number. Returns None on failure.
     """
-    will = _fred_latest("WILL5000PRFC", timeout)
     gdp = _fred_latest("GDP", timeout)
-    if not will or not gdp:
-        print(f"Buffett: missing data (wilshire={will}, gdp={gdp})", file=sys.stderr)
+    if not gdp:
+        print("Buffett: GDP unavailable", file=sys.stderr)
         return None
-    return will / gdp * 100.0
+    for series in _WILSHIRE_SERIES:
+        will = _fred_latest(series, timeout)
+        if not will:
+            continue
+        ratio = will / gdp * 100.0
+        if 40 <= ratio <= 400:
+            return ratio
+        print(f"Buffett: {series}={will} → implausible {ratio:.0f}%, skipping", file=sys.stderr)
+    print("Buffett: no usable Wilshire series", file=sys.stderr)
+    return None
