@@ -10,6 +10,10 @@ on:
         description: "Send a test email now, ignoring threshold/cooldown"
         type: boolean
         default: true
+      broadcast:
+        description: "Use the real Broadcast path (emails the whole Audience from your verified domain) instead of a direct test to EMAIL_TO"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,11 +35,14 @@ jobs:
       - name: Run Be Greedy
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # Broadcast to the subscriber list only on the scheduled run. A manual
+          # Broadcast to the subscriber list on the scheduled run. A manual
           # "Run workflow" sends a direct test email to EMAIL_TO instead, which
           # works with Resend's shared sender (no domain verification, no need
-          # to be a contact in the Audience) — the most reliable way to test.
-          RESEND_AUDIENCE_ID: ${{ github.event_name == 'schedule' && secrets.RESEND_AUDIENCE_ID || '' }}
+          # to be a contact in the Audience) — the most reliable smoke test.
+          # Tick "broadcast" on a manual run to exercise the *real* Broadcast
+          # path end-to-end (it emails the whole Audience from EMAIL_FROM, so it
+          # needs a verified domain — exactly what the scheduled alert uses).
+          RESEND_AUDIENCE_ID: ${{ (github.event_name == 'schedule' || inputs.broadcast) && secrets.RESEND_AUDIENCE_ID || '' }}
           # Set the EMAIL_TO repo secret to your address to receive manual test
           # emails. (Kept as a secret, not hardcoded, so it's not public.)
           EMAIL_TO: ${{ secrets.EMAIL_TO }}

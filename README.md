@@ -100,6 +100,9 @@ your Audience, each with their own unsubscribe link.
    **Read and write** so the Action can commit the cooldown state back.
 5. That's it. The `Be Greedy daily check` workflow runs weekday afternoons.
    Use **Actions → Run workflow → force = true** to send a test alert immediately.
+   That sends a *transactional* email to `EMAIL_TO`; also tick **broadcast = true**
+   to exercise the real Broadcast path (the whole Audience, from `EMAIL_FROM`) —
+   the only way to prove a scheduled alert will actually deliver.
 
 > **Local testing without a list:** set `EMAIL_TO` (and no `RESEND_AUDIENCE_ID`)
 > to send a one-off email to yourself via `python -m market_pulse.main --force`.
