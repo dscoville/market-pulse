@@ -98,8 +98,11 @@ your Audience, each with their own unsubscribe link.
    **not** prove the real Broadcast path will deliver — set `EMAIL_FROM` below.)
 2. **Create an Audience** (now called a **Segment** — Resend renamed Audiences →
    Segments; a fresh account ships with a default `general` one) and copy its
-   **ID**. Add yourself to it so you get the alerts too. The Broadcasts API still
-   accepts this as `audience_id`, so it goes in the `RESEND_AUDIENCE_ID` secret.
+   **ID** — it's the `segmentId` in the dashboard URL, e.g.
+   `resend.com/audience?segmentId=1291173b-…`. Add yourself to it so you get the
+   alerts too. The Broadcasts API still accepts this as `audience_id`, so it goes
+   in the `RESEND_AUDIENCE_ID` secret. **Use the same account, key, and Segment
+   ID as the signup Worker in `worker/`** — they must share one list.
 3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
    - `RESEND_AUDIENCE_ID` — the Audience from step 2
