@@ -83,15 +83,23 @@ Be Greedy emails **a list of subscribers** — you're just the first name on
 it. When an alert fires it goes out as a Resend **Broadcast** to everyone in
 your Audience, each with their own unsubscribe link.
 
+> **Heads up:** Be Greedy runs in its **own dedicated Resend account** (the one
+> where `begreedy.io` is verified) — Resend's free tier allows only one verified
+> domain per account, so this can't share an account with another project's
+> domain. Make sure you're configuring secrets from *that* account: the API key,
+> the verified domain, and the Segment all have to live together, or Resend 403s
+> with "domain is not verified" even though the domain looks green elsewhere.
+
 1. **Get a Resend API key** at <https://resend.com/api-keys>, then **verify your
    sending domain** at <https://resend.com/domains>. A verified domain is
    **required** for the scheduled alerts: Resend rejects *Broadcasts* sent from
    the shared `onboarding@resend.dev` address with a 403. (That shared address
    works for one-off `--force`/`EMAIL_TO` tests, so a passing manual test does
    **not** prove the real Broadcast path will deliver — set `EMAIL_FROM` below.)
-2. **Create an Audience** at <https://resend.com/audiences> (this is the
-   subscriber list) and copy its **Audience ID**. Add yourself to it so you get
-   the alerts too.
+2. **Create an Audience** (now called a **Segment** — Resend renamed Audiences →
+   Segments; a fresh account ships with a default `general` one) and copy its
+   **ID**. Add yourself to it so you get the alerts too. The Broadcasts API still
+   accepts this as `audience_id`, so it goes in the `RESEND_AUDIENCE_ID` secret.
 3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
    - `RESEND_AUDIENCE_ID` — the Audience from step 2
