@@ -83,19 +83,37 @@ Be Greedy emails **a list of subscribers** — you're just the first name on
 it. When an alert fires it goes out as a Resend **Broadcast** to everyone in
 your Audience, each with their own unsubscribe link.
 
-1. **Get a Resend API key** at <https://resend.com/api-keys>. For testing you can
-   send from `onboarding@resend.dev`; for production, verify your own domain.
-2. **Create an Audience** at <https://resend.com/audiences> (this is the
-   subscriber list) and copy its **Audience ID**. Add yourself to it so you get
-   the alerts too.
+> **Heads up:** Be Greedy runs in its **own dedicated Resend account** (the one
+> where `begreedy.io` is verified) — Resend's free tier allows only one verified
+> domain per account, so this can't share an account with another project's
+> domain. Make sure you're configuring secrets from *that* account: the API key,
+> the verified domain, and the Segment all have to live together, or Resend 403s
+> with "domain is not verified" even though the domain looks green elsewhere.
+
+1. **Get a Resend API key** at <https://resend.com/api-keys>, then **verify your
+   sending domain** at <https://resend.com/domains>. A verified domain is
+   **required** for the scheduled alerts: Resend rejects *Broadcasts* sent from
+   the shared `onboarding@resend.dev` address with a 403. (That shared address
+   works for one-off `--force`/`EMAIL_TO` tests, so a passing manual test does
+   **not** prove the real Broadcast path will deliver — set `EMAIL_FROM` below.)
+2. **Create an Audience** (now called a **Segment** — Resend renamed Audiences →
+   Segments; a fresh account ships with a default `general` one) and copy its
+   **ID** — it's the `segmentId` in the dashboard URL, e.g.
+   `resend.com/audience?segmentId=1291173b-…`. Add yourself to it so you get the
+   alerts too. The Broadcasts API still accepts this as `audience_id`, so it goes
+   in the `RESEND_AUDIENCE_ID` secret. **Use the same account, key, and Segment
+   ID as the signup Worker in `worker/`** — they must share one list.
 3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
    - `RESEND_AUDIENCE_ID` — the Audience from step 2
-   - `EMAIL_FROM` *(optional)* — e.g. `Be Greedy <alerts@begreedy.io>` (the domain must be verified in Resend)
+   - `EMAIL_FROM` — a sender on your verified domain, e.g. `Be Greedy <alerts@begreedy.io>`. **Required** for the scheduled Broadcast; without it the run falls back to `onboarding@resend.dev` and Resend 403s every alert.
 4. Under **Settings → Actions → General → Workflow permissions**, enable
    **Read and write** so the Action can commit the cooldown state back.
 5. That's it. The `Be Greedy daily check` workflow runs weekday afternoons.
    Use **Actions → Run workflow → force = true** to send a test alert immediately.
+   That sends a *transactional* email to `EMAIL_TO`; also tick **broadcast = true**
+   to exercise the real Broadcast path (the whole Audience, from `EMAIL_FROM`) —
+   the only way to prove a scheduled alert will actually deliver.
 
 > **Local testing without a list:** set `EMAIL_TO` (and no `RESEND_AUDIENCE_ID`)
 > to send a one-off email to yourself via `python -m market_pulse.main --force`.

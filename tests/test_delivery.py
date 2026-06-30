@@ -9,7 +9,7 @@ import math
 import pytest
 
 from market_pulse.config import Config
-from market_pulse.emailer import UNSUBSCRIBE_TOKEN
+from market_pulse.emailer import UNSUBSCRIBE_TOKEN, EmailError, send_broadcast
 from market_pulse import report
 from market_pulse.signals import evaluate
 
@@ -65,6 +65,24 @@ def test_audience_wins_when_both_set(monkeypatch):
     monkeypatch.setenv("RESEND_AUDIENCE_ID", "aud_123")
     monkeypatch.setenv("EMAIL_TO", "me@example.com")
     assert Config.from_env().send_mode == "broadcast"
+
+
+# --------------------------------------------------------------------------
+# Broadcast guards: reject a known-bad sender before hitting the Resend API.
+# --------------------------------------------------------------------------
+
+def test_broadcast_rejects_shared_resend_sender():
+    # Resend 403s broadcasts from onboarding@resend.dev ("use a verified
+    # domain"). Fail fast with an actionable message instead of a buried 403.
+    with pytest.raises(EmailError, match="verified domain"):
+        send_broadcast(
+            "re_test",
+            "Be Greedy <onboarding@resend.dev>",
+            "aud_123",
+            "subject",
+            f"html {UNSUBSCRIBE_TOKEN}",
+            f"text {UNSUBSCRIBE_TOKEN}",
+        )
 
 
 # --------------------------------------------------------------------------

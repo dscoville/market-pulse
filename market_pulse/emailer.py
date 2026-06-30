@@ -98,6 +98,19 @@ def send_broadcast(
             "Broadcast content must include the unsubscribe token "
             f"{UNSUBSCRIBE_TOKEN} in both html and text."
         )
+    # Resend's shared sender (onboarding@resend.dev) works for one-off
+    # transactional emails — which is what the manual --force test uses — but
+    # Resend rejects *broadcasts* from it with a 403 ("use a verified domain").
+    # That mismatch means the test path can pass while the real scheduled path
+    # is broken, only surfacing weeks later when an alert actually fires. Catch
+    # it up front with an actionable message instead of a buried 403.
+    if "@resend.dev" in sender:
+        raise EmailError(
+            f"Cannot broadcast from the shared Resend sender ({sender}). "
+            "Broadcasts require a verified domain — set the EMAIL_FROM secret "
+            "to a sender on your verified domain, e.g. "
+            "'Be Greedy <alerts@begreedy.io>'."
+        )
     created = _post(
         "/broadcasts",
         api_key,
