@@ -83,15 +83,19 @@ Be Greedy emails **a list of subscribers** — you're just the first name on
 it. When an alert fires it goes out as a Resend **Broadcast** to everyone in
 your Audience, each with their own unsubscribe link.
 
-1. **Get a Resend API key** at <https://resend.com/api-keys>. For testing you can
-   send from `onboarding@resend.dev`; for production, verify your own domain.
+1. **Get a Resend API key** at <https://resend.com/api-keys>, then **verify your
+   sending domain** at <https://resend.com/domains>. A verified domain is
+   **required** for the scheduled alerts: Resend rejects *Broadcasts* sent from
+   the shared `onboarding@resend.dev` address with a 403. (That shared address
+   works for one-off `--force`/`EMAIL_TO` tests, so a passing manual test does
+   **not** prove the real Broadcast path will deliver — set `EMAIL_FROM` below.)
 2. **Create an Audience** at <https://resend.com/audiences> (this is the
    subscriber list) and copy its **Audience ID**. Add yourself to it so you get
    the alerts too.
 3. In the repo, go to **Settings → Secrets and variables → Actions** and add:
    - `RESEND_API_KEY`
    - `RESEND_AUDIENCE_ID` — the Audience from step 2
-   - `EMAIL_FROM` *(optional)* — e.g. `Be Greedy <alerts@begreedy.io>` (the domain must be verified in Resend)
+   - `EMAIL_FROM` — a sender on your verified domain, e.g. `Be Greedy <alerts@begreedy.io>`. **Required** for the scheduled Broadcast; without it the run falls back to `onboarding@resend.dev` and Resend 403s every alert.
 4. Under **Settings → Actions → General → Workflow permissions**, enable
    **Read and write** so the Action can commit the cooldown state back.
 5. That's it. The `Be Greedy daily check` workflow runs weekday afternoons.
