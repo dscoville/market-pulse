@@ -58,6 +58,7 @@ class Variant:
     rearm_level: float = 30.0
     threshold: float = 60.0
     cooldown_days: int = 7
+    trim_threshold: float | None = None   # stricter bar for TRIM only, if set
 
 
 VARIANTS = [
@@ -71,6 +72,8 @@ VARIANTS = [
             valuation="tilt", latch=True, rearm_level=20.0),
     Variant("new_rearm40", "New, looser re-arm (±40)",
             valuation="tilt", latch=True, rearm_level=40.0),
+    Variant("new_trim75", "New, but BE FEARFUL needs ≤ -75 (BE GREEDY still ≥ 60)",
+            valuation="tilt", latch=True, rearm_level=30.0, trim_threshold=75.0),
     Variant("percentile", "Alt: CAPE vs its own 20-yr percentile (full weight) + latch",
             valuation="percentile", latch=True, rearm_level=30.0),
     Variant("no_cape_latch", "Alt: no CAPE at all + latch",
@@ -178,6 +181,9 @@ def simulate(data: dict, variants: list[Variant] = VARIANTS, start: str = "1990-
             else:
                 state["latched"] = None
             ok, _ = decide(a, cfg, state, now=now)
+            tt = res.variant.trim_threshold
+            if ok and tt is not None and a.action == "TRIM" and a.score > -tt:
+                ok = False
             if ok:
                 record_alert(state, a, now=now)
                 res.alerts.append(Alert(day, i, a.action, a.score, sp[i]))
