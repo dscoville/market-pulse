@@ -1,5 +1,23 @@
 # Be Greedy 📈
 
+> **Closed — September 2026.** A backtest over 1990–2026 (`python -m
+> market_pulse.backtest`) found that acting on the alerts didn't beat simply
+> staying invested, so the service was shut down. The daily schedule is off,
+> the landing page is a closure notice, and subscribers get one goodbye email.
+> The code stays here for reference.
+>
+> **Shutdown checklist**
+> 1. Merge the shutdown PR. This removes the weekday schedule, so no more alerts.
+> 2. Actions → *Be Greedy daily check* → *Run workflow* with **farewell** ticked
+>    and **broadcast** unticked. This sends the goodbye email only to `EMAIL_TO`
+>    so you can preview it. When it looks right, run again with **broadcast**
+>    ticked to send it to every subscriber (it only goes out once).
+> 3. Resend: delete the subscriber Segment's contacts and revoke the API key.
+> 4. Cloudflare: delete the `market-pulse-subscribe` Worker (`cd worker && npx wrangler delete`).
+> 5. Domain registrar: turn off auto-renew for `begreedy.io`.
+> 6. GitHub: delete the repo's Actions secrets. Once the domain lapses, turn off
+>    Pages (Settings → Pages) and archive the repo.
+
 **be greedy when others are fearful**
 
 > *"Be fearful when others are greedy, and greedy when others are fearful."* — Warren Buffett

@@ -1,15 +1,19 @@
 name: Be Greedy daily check
 
+# Be Greedy closed in September 2026: the weekday schedule is gone, so nothing
+# runs on its own any more. The manual trigger remains only to send the
+# one-time goodbye email (tick "farewell").
 on:
-  schedule:
-    # 21:30 UTC on weekdays — shortly after the US market close.
-    - cron: "30 21 * * 1-5"
   workflow_dispatch:
     inputs:
-      force:
-        description: "Send a test email now, ignoring threshold/cooldown"
+      farewell:
+        description: "Send the one-time goodbye email (a direct test to EMAIL_TO unless 'broadcast' is ticked)"
         type: boolean
         default: true
+      force:
+        description: "Send a test alert now, ignoring threshold/cooldown"
+        type: boolean
+        default: false
       broadcast:
         description: "Use the real Broadcast path (emails the whole Audience from your verified domain) instead of a direct test to EMAIL_TO"
         type: boolean
@@ -35,20 +39,17 @@ jobs:
       - name: Run Be Greedy
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # Broadcast to the subscriber list on the scheduled run. A manual
-          # "Run workflow" sends a direct test email to EMAIL_TO instead, which
-          # works with Resend's shared sender (no domain verification, no need
-          # to be a contact in the Audience) — the most reliable smoke test.
-          # Tick "broadcast" on a manual run to exercise the *real* Broadcast
-          # path end-to-end (it emails the whole Audience from EMAIL_FROM, so it
-          # needs a verified domain — exactly what the scheduled alert uses).
-          RESEND_AUDIENCE_ID: ${{ (github.event_name == 'schedule' || inputs.broadcast) && secrets.RESEND_AUDIENCE_ID || '' }}
+          # By default a run sends a direct test email to EMAIL_TO — use it to
+          # preview the goodbye email in your own inbox. Tick "broadcast" to
+          # send to the whole subscriber list from EMAIL_FROM (needs the
+          # verified domain). The farewell broadcast only goes out once.
+          RESEND_AUDIENCE_ID: ${{ inputs.broadcast && secrets.RESEND_AUDIENCE_ID || '' }}
           # Set the EMAIL_TO repo secret to your address to receive manual test
           # emails. (Kept as a secret, not hardcoded, so it's not public.)
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           FORCE: ${{ inputs.force }}
-        run: python -m market_pulse.main
+        run: python -m market_pulse.main ${{ inputs.farewell && '--farewell' || '' }}
 
       - name: Persist cooldown state
         run: |

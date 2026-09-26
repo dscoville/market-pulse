@@ -108,3 +108,39 @@ def test_unsubscribe_token_threads_through_for_broadcast():
     # send_broadcast requires the token in both bodies; make sure it's there.
     assert UNSUBSCRIBE_TOKEN in text
     assert UNSUBSCRIBE_TOKEN in html
+
+
+# --------------------------------------------------------------------------
+# Farewell: the one-time goodbye email
+# --------------------------------------------------------------------------
+
+def test_farewell_broadcast_content_carries_unsubscribe_token():
+    from market_pulse import farewell
+    assert UNSUBSCRIBE_TOKEN in farewell.render_html(UNSUBSCRIBE_TOKEN)
+    assert UNSUBSCRIBE_TOKEN in farewell.render_text(UNSUBSCRIBE_TOKEN)
+    assert UNSUBSCRIBE_TOKEN not in farewell.render_text()
+
+
+def test_farewell_sends_once_then_refuses(monkeypatch, tmp_path):
+    from market_pulse import main as m
+    sent = []
+    monkeypatch.setattr(m, "send_broadcast", lambda *a, **k: sent.append(a) or {"id": "b_1"})
+    _clear_email_env(monkeypatch)
+    monkeypatch.setenv("RESEND_API_KEY", "re_test")
+    monkeypatch.setenv("RESEND_AUDIENCE_ID", "aud_123")
+    monkeypatch.setenv("EMAIL_FROM", "Be Greedy <alerts@begreedy.io>")
+    monkeypatch.setenv("STATE_FILE", str(tmp_path / "state.json"))
+    assert m.main(["--farewell"]) == 0
+    assert m.main(["--farewell"]) == 0
+    assert len(sent) == 1
+
+
+def test_farewell_direct_test_send_does_not_burn_the_one_shot(monkeypatch, tmp_path):
+    from market_pulse import main as m
+    monkeypatch.setattr(m, "send_email", lambda *a, **k: {"id": "e_1"})
+    _clear_email_env(monkeypatch)
+    monkeypatch.setenv("RESEND_API_KEY", "re_test")
+    monkeypatch.setenv("EMAIL_TO", "me@example.com")
+    monkeypatch.setenv("STATE_FILE", str(tmp_path / "state.json"))
+    assert m.main(["--farewell"]) == 0
+    assert not (tmp_path / "state.json").exists()
