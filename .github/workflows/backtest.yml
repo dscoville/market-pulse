@@ -28,7 +28,7 @@ jobs:
       - name: Unit tests
         run: |
           pip install -r requirements-dev.txt
-          pytest -q
+          python -m pytest -q
 
       - name: Backtest since 1990
         run: python -m market_pulse.backtest --markdown "$GITHUB_STEP_SUMMARY"
