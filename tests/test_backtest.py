@@ -93,3 +93,9 @@ def test_series_round_trip(tmp_path):
     path = tmp_path / "s.csv"
     history.save_series(str(path), series)
     assert history.load_series(str(path)) == series
+
+
+def test_is_daily_rejects_coarse_bars():
+    assert history.is_daily(_weekdays(date(2000, 1, 3), 60))
+    monthly = [f"{2000 + i // 12}-{i % 12 + 1:02d}-01" for i in range(60)]
+    assert not history.is_daily(monthly)

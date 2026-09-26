@@ -158,6 +158,9 @@ def simulate(data: dict, variants: list[Variant] = VARIANTS, start: str = "1990-
     ]
 
     first = max(WINDOW, bisect.bisect_left(sp_dates, max(start, vix_dates[0])))
+    if first >= len(sp):
+        raise ValueError(f"not enough S&P history to simulate: {len(sp)} rows, "
+                         f"need more than {WINDOW} before {max(start, vix_dates[0])}")
     vj = 0
     for i in range(first, len(sp)):
         day = sp_dates[i]

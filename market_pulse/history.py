@@ -5,7 +5,7 @@ needs decades, plus the monthly Shiller CAPE series, so it gets its own
 fetchers here. Like ``data.py``, every source is keyless and the parsing is
 pure so it can be tested offline.
 
-  S&P 500 daily   Stooq full history, falling back to Yahoo (range=max)
+  S&P 500 daily   Stooq full history, falling back to Yahoo (since 1970)
   VIX daily       datasets/finance-vix on GitHub (CBOE), falling back to Yahoo
   CAPE monthly    multpl.com's by-month table, falling back to Shiller's
                   dataset mirrored at datasets/s-and-p-500 on GitHub (which
@@ -22,13 +22,16 @@ import io
 import os
 import re
 import sys
+import time
 from datetime import datetime
 
 from . import data
 
-YAHOO_MAX_URL = (
+# An explicit period (from 1970) rather than range=max: Yahoo silently
+# downgrades range=max to monthly-ish bars even when interval=1d is asked for.
+YAHOO_HISTORY_URL = (
     "https://query1.finance.yahoo.com/v8/finance/chart/"
-    "{symbol}?range=max&interval=1d"
+    "{symbol}?period1=0&period2={now}&interval=1d"
 )
 VIX_GITHUB_URL = "https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv"
 MULTPL_CAPE_TABLE_URL = "https://www.multpl.com/shiller-pe/table/by-month"
@@ -99,7 +102,16 @@ def parse_vix_github(raw: str) -> Series:
 # Fetchers (network)
 # --------------------------------------------------------------------------
 
-def _first_usable(name: str, attempts) -> Series:
+def is_daily(dates: list[str]) -> bool:
+    """True if the series looks like daily bars (median gap of a few days)."""
+    if len(dates) < 30:
+        return False
+    days = [datetime.fromisoformat(d) for d in dates]
+    gaps = sorted((b - a).days for a, b in zip(days, days[1:]))
+    return gaps[len(gaps) // 2] <= 4
+
+
+def _first_usable(name: str, attempts, daily: bool = False) -> Series:
     problems = []
     for label, fn in attempts:
         try:
@@ -107,28 +119,35 @@ def _first_usable(name: str, attempts) -> Series:
         except Exception as e:
             problems.append(f"{label}: {type(e).__name__}: {e}")
             continue
-        if values:
+        if not values:
+            problems.append(f"{label}: no usable rows")
+        elif daily and not is_daily(dates):
+            problems.append(f"{label}: {len(values)} rows are not daily bars")
+        else:
             print(f"{name}: {len(values)} rows from {label} "
                   f"({dates[0]} → {dates[-1]})", file=sys.stderr)
             return dates, values
-        problems.append(f"{label}: no usable rows")
+        print(f"{name}: {problems[-1]}", file=sys.stderr)
     raise ValueError(f"No usable {name} history. " + " | ".join(problems))
+
+
+def _yahoo_history(key: str, timeout: int) -> Series:
+    url = YAHOO_HISTORY_URL.format(symbol=data.YAHOO_SYMBOLS[key], now=int(time.time()))
+    return data._parse_yahoo_chart(data._http_get(url, timeout))
 
 
 def fetch_sp500_history(timeout: int = 60) -> Series:
     return _first_usable("S&P 500", [
         ("Stooq", lambda: data._fetch_stooq("sp500", timeout)),
-        ("Yahoo", lambda: data._parse_yahoo_chart(data._http_get(
-            YAHOO_MAX_URL.format(symbol=data.YAHOO_SYMBOLS["sp500"]), timeout))),
-    ])
+        ("Yahoo", lambda: _yahoo_history("sp500", timeout)),
+    ], daily=True)
 
 
 def fetch_vix_history(timeout: int = 60) -> Series:
     return _first_usable("VIX", [
         ("GitHub finance-vix", lambda: parse_vix_github(data._http_get(VIX_GITHUB_URL, timeout))),
-        ("Yahoo", lambda: data._parse_yahoo_chart(data._http_get(
-            YAHOO_MAX_URL.format(symbol=data.YAHOO_SYMBOLS["vix"]), timeout))),
-    ])
+        ("Yahoo", lambda: _yahoo_history("vix", timeout)),
+    ], daily=True)
 
 
 def fetch_cape_history(timeout: int = 60) -> Series:
