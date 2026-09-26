@@ -45,6 +45,7 @@ class Config:
     alert_threshold: float  # absolute composite score required to send an email
     min_corroborating: int  # how many signals must agree before we alert
     cooldown_days: int      # never send more than one alert per this many days
+    rearm_level: float      # after an alert, |score| must cool below this before that side can alert again
     state_file: str         # where the last-alert timestamp is persisted
 
     # Flags
@@ -67,6 +68,7 @@ class Config:
             alert_threshold=_get_float("ALERT_THRESHOLD", 60.0),
             min_corroborating=_get_int("MIN_CORROBORATING", 2),
             cooldown_days=_get_int("COOLDOWN_DAYS", 7),
+            rearm_level=_get_float("REARM_LEVEL", 30.0),
             state_file=os.environ.get("STATE_FILE", "state/last_alert.json"),
             dry_run=_get_bool("DRY_RUN", False),
             force=_get_bool("FORCE", False),
