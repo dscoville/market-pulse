@@ -1,5 +1,23 @@
 # Be Greedy 📈
 
+> **Closed — September 2026.** A backtest over 1990–2026 (`python -m
+> market_pulse.backtest`) found that acting on the alerts didn't beat simply
+> staying invested, so the service was shut down. The daily schedule is off,
+> the landing page is a closure notice, and subscribers get one goodbye email.
+> The code stays here for reference.
+>
+> **Shutdown checklist**
+> 1. Merge the shutdown PR. This removes the weekday schedule, so no more alerts.
+> 2. Actions → *Be Greedy daily check* → *Run workflow* with **farewell** ticked
+>    and **broadcast** unticked. This sends the goodbye email only to `EMAIL_TO`
+>    so you can preview it. When it looks right, run again with **broadcast**
+>    ticked to send it to every subscriber (it only goes out once).
+> 3. Resend: delete the subscriber Segment's contacts and revoke the API key.
+> 4. Cloudflare: delete the `market-pulse-subscribe` Worker (`cd worker && npx wrangler delete`).
+> 5. Domain registrar: turn off auto-renew for `begreedy.io`.
+> 6. GitHub: delete the repo's Actions secrets. Once the domain lapses, turn off
+>    Pages (Settings → Pages) and archive the repo.
+
 **be greedy when others are fearful**
 
 > *"Be fearful when others are greedy, and greedy when others are fearful."* — Warren Buffett
@@ -13,7 +31,7 @@ is most of the time. That silence is the feature.
 - 🔴 **BE FEARFUL** — the market is frothy and euphoric. Consider taking a little off the top.
 - ⚪️ **STAND PAT** — nothing unusual. No email. Do nothing.
 
-**Emails are rare by design** — never more than once every 7 days, and only at
+**Emails are rare by design** — one per extreme, never more than once every 7 days, and only at
 real extremes.
 
 ---
@@ -41,14 +59,38 @@ an alert on its own:
 | **Distance from 200-day avg** | Trend stretch | Far below = bargain; far above = stretched |
 | **Position in 52-week range** | Where price sits low→high | Near lows the crowd is fearful; near highs, greedy |
 | **VIX (fear gauge)** | Volatility / fear | A spiking VIX is the market screaming |
+| **Shiller CAPE** *(tilt)* | How expensive stocks are vs. a decade of earnings | Rich valuations make froth more dangerous |
+
+CAPE is a **tilt, not a trigger**: it can move the score by at most 15 points
+and never counts as a corroborating signal. It sits at the same reading for
+years, so at full weight it made an ordinary day near the highs read
+BE FEARFUL — and in summer 2026 that emailed every week. The market itself
+has to do something unusual.
 
 An email is sent **only if all** of these hold:
 1. `|score|` ≥ `ALERT_THRESHOLD` (default **60** — a real extreme), and
-2. at least `MIN_CORROBORATING` signals (default **2**) agree, and
-3. no alert has gone out in the last `COOLDOWN_DAYS` (default **7**).
+2. at least `MIN_CORROBORATING` *market* signals (default **2**) agree, and
+3. we haven't already alerted on this extreme: after an email, that side stays
+   quiet until the score cools back inside ±`REARM_LEVEL` (default **30**) —
+   **one email per episode**, however long it lasts, and
+4. no alert has gone out in the last `COOLDOWN_DAYS` (default **7**).
 
-The cooldown is persisted in `state/last_alert.json`, which the Action commits
-back to the repo after each run.
+The latch and cooldown are persisted in `state/last_alert.json`, which the
+Action commits back to the repo whenever it changes.
+
+### Backtest
+
+```bash
+python -m market_pulse.backtest                    # fetch history since 1990 and replay
+python -m market_pulse.backtest --save-data hist/  # ...and cache it for offline re-runs
+python -m market_pulse.backtest --data hist/
+```
+
+Replays the real engine and alert rules every trading day since 1990 and
+reports how often each variant would have emailed and what the S&P did over
+the following 3/6/12/24 months — including a "follow the emails" portfolio
+versus simply holding. The **Backtest** GitHub Action runs it on every PR that
+touches the engine and posts the table to the run summary.
 
 > ⚠️ **Not financial advice.** This is a heuristic on a broad index to inform
 > *your own* judgement — not an instruction.
@@ -155,8 +197,8 @@ the Worker URL into `SUBSCRIBE_ENDPOINT` in `docs/index.html`.
 ## Roadmap
 
 - **P0 (this repo):** rare, high-conviction email alerts. ✅
-- **Richer "Buffett" valuation inputs:** Shiller CAPE and the Buffett Indicator
-  (market cap / GDP) as additional greed/fear signals.
+- **Richer "Buffett" valuation inputs:** Shiller CAPE ✅ (as a capped tilt);
+  the Buffett Indicator (market cap / GDP) once a reliable free source exists.
 - **A real app:** dashboard + history of past calls and how they played out.
 - **Brokerage execution:** connect directly to Fidelity / Vanguard / Robinhood
   to act on signals — e.g. auto-buy on extreme fear, trim on extreme greed —
@@ -168,13 +210,17 @@ the Worker URL into `SUBSCRIBE_ENDPOINT` in `docs/index.html`.
 
 ```
 market_pulse/
-  data.py      # fetch S&P 500 + VIX (the only networked module)
+  data.py      # fetch S&P 500 + VIX + CAPE for the daily run
+  history.py   # fetch decades of history for the backtest
   signals.py   # pure, offline-testable scoring engine
+  policy.py    # pure alert rules: threshold, corroboration, latch, cooldown
+  backtest.py  # replay engine + rules over history
   report.py    # render the email (HTML + text)
   emailer.py   # send via Resend (stdlib only)
-  state.py     # cooldown persistence
+  state.py     # latch + cooldown persistence
   config.py    # env-var configuration
   main.py      # orchestrate: fetch → assess → maybe send
 tests/         # offline unit tests for the engine
 .github/workflows/daily.yml
+.github/workflows/backtest.yml
 ```

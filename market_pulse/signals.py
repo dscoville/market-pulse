@@ -23,6 +23,7 @@ class Signal:
     display: str      # formatted value, e.g. "-18.2%"
     score: float      # signed contribution to the composite
     note: str = ""    # one-line Buffett-flavoured interpretation
+    kind: str = "market"  # "market" (price/fear behaviour) or "valuation"
 
     @property
     def direction(self) -> str:
@@ -44,13 +45,18 @@ class Assessment:
     as_of: str
 
     def corroborating(self, min_magnitude: float = 8.0) -> int:
-        """How many signals meaningfully agree with the composite direction."""
+        """How many *market* signals meaningfully agree with the composite direction.
+
+        Valuation gauges never count: they sit at the same reading for years,
+        so letting one vouch for an alert means the market only has to agree
+        with it once — which, near the highs, it nearly always does.
+        """
         if self.action == "HOLD":
             return 0
         want = "fear" if self.action == "BUY" else "greed"
         return sum(
             1 for s in self.signals
-            if s.direction == want and abs(s.score) >= min_magnitude
+            if s.kind == "market" and s.direction == want and abs(s.score) >= min_magnitude
         )
 
 
@@ -134,14 +140,23 @@ _TREND_CURVE = [(-20, 24), (-12, 15), (-5, 6), (0, 0), (5, -6), (12, -15), (20, 
 _RANGE_CURVE = [(0.0, 13), (0.1, 9), (0.3, 3), (0.5, 0), (0.7, -3), (0.9, -9), (1.0, -13)]
 _VIX_CURVE = [(10, -18), (13, -10), (17, 0), (20, 7), (25, 16), (30, 26), (40, 40), (55, 50)]
 
-# Valuation curves. Slow-moving "how expensive is the market" gauges — the
-# Buffett-flavoured heart of the engine. High readings => expensive => greed
-# => negative (lean TRIM / BE FEARFUL).
+# Valuation curves. Slow-moving "how expensive is the market" gauges. High
+# readings => expensive => greed => negative (lean TRIM / BE FEARFUL).
 #   Shiller CAPE: long-run mean ~17; dot-com peak ~44; 1929 peak ~33.
 _CAPE_CURVE = [(8, 30), (12, 20), (16, 8), (20, 0), (24, -8), (28, -16), (32, -26), (36, -36), (40, -46), (45, -52)]
 #   Buffett Indicator (total market cap / GDP, %): historic mean ~85; dot-com
 #   ~145; 2021 ~200; mid-2020s records ~210-240.
 _BUFFETT_CURVE = [(60, 25), (80, 12), (100, 0), (120, -10), (140, -20), (160, -28), (185, -36), (210, -44), (240, -52)]
+
+# Valuation is a *tilt*, not a trigger. The curves above say how extreme a
+# reading is; together the valuation gauges may move the composite by at most
+# this many points. CAPE has sat above 30 for most of the years since 2017 —
+# scored at full weight it added ~-45 every single day, so an ordinary day
+# near the highs cleared the alert threshold and "BE FEARFUL" went out every
+# week. Capped, rich valuations make a genuine melt-up easier to flag (and a
+# crash a little harder), but the market itself has to do something unusual.
+VALUATION_CAP = 15.0
+_CURVE_MAX = 52.0  # largest |value| on the curves above
 
 
 def evaluate(
@@ -197,19 +212,28 @@ def evaluate(
             "A spiking VIX is the market screaming; a sleepy VIX is complacency.",
         ))
 
+    valuation: list[Signal] = []
     if cape is not None:
-        signals.append(Signal(
+        valuation.append(Signal(
             "cape", "Shiller CAPE (10-year P/E)", f"{cape:.0f}",
             _interp(cape, _CAPE_CURVE),
             "Shiller's 10-year P/E — high means stocks are dear versus a decade of earnings.",
+            kind="valuation",
         ))
 
     if buffett_indicator is not None:
-        signals.append(Signal(
+        valuation.append(Signal(
             "buffett", "Buffett Indicator (market cap / GDP)", f"{buffett_indicator:.0f}%",
             _interp(buffett_indicator, _BUFFETT_CURVE),
             "Total US market value versus GDP — Buffett's favourite gauge. Sky-high means expensive.",
+            kind="valuation",
         ))
+
+    # Share the tilt between however many valuation gauges we have, so adding
+    # a second one refines the reading rather than doubling its weight.
+    for s in valuation:
+        s.score *= VALUATION_CAP / _CURVE_MAX / len(valuation)
+    signals.extend(valuation)
 
     raw = sum(s.score for s in signals)
     score = max(-100.0, min(100.0, raw))

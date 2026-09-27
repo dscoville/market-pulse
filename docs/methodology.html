@@ -352,7 +352,7 @@
   <!-- WHEN EMAILS SEND -->
   <section>
     <p class="eyebrow">When an email actually sends</p>
-    <h2>Four gates, all must pass</h2>
+    <h2>Five gates, all must pass</h2>
     <p>On the scheduled run, an alert goes out <strong>only if every one</strong> of these holds. Failing any one means silence.</p>
     <ol class="gates">
       <li>
@@ -366,9 +366,17 @@
       <li>
         <strong>Enough signals corroborate.</strong> At least
         <span class="mono">MIN_CORROBORATING</span> (default <strong>2</strong>)
-        individual signals point the same way as the composite, each with a
+        individual <em>market</em> signals point the same way as the composite, each with a
         sub-score of magnitude <strong>≥ 8</strong>. One lone signal can't trip an
-        alert — the move has to be broad-based.
+        alert — the move has to be broad-based. Valuation (Shiller CAPE) never
+        counts here: it's a slow tilt of at most 15 points, not a vote.
+      </li>
+      <li>
+        <strong>It's a new extreme.</strong> After an email, that side stays quiet
+        until the composite cools back inside
+        <span class="mono">±REARM_LEVEL</span> (default <strong>30</strong>). One
+        email per episode — a market that stays rich for months gets one
+        Be Fearful, not one a week.
       </li>
       <li>
         <strong>The cooldown is clear.</strong> No alert has gone out in the last
@@ -378,7 +386,8 @@
     </ol>
     <p class="callout">
       <strong>The knobs.</strong> <span class="mono">ALERT_THRESHOLD</span>,
-      <span class="mono">MIN_CORROBORATING</span> and
+      <span class="mono">MIN_CORROBORATING</span>,
+      <span class="mono">REARM_LEVEL</span> and
       <span class="mono">COOLDOWN_DAYS</span> are all environment variables — raise
       the threshold for rarer, higher-conviction calls; lower it to hear more.
     </p>
@@ -393,13 +402,12 @@
     <p>
       A GitHub Action runs at <strong>21:30 UTC, Monday–Friday</strong> — shortly
       after the 4pm ET US close. It fetches the day's data, scores the market, and
-      applies the four gates above. When an alert fires it goes out as a single
+      applies the five gates above. When an alert fires it goes out as a single
       broadcast to every subscriber, each with their own one-click unsubscribe link.
     </p>
     <p>
-      The cooldown timestamp is persisted between runs (committed back to the repo
-      as <span class="mono">state/last_alert.json</span>), so the once-a-week
-      guarantee survives even though each run starts on a fresh, ephemeral machine.
+      The latch and cooldown timestamp are persisted between runs (committed back to the repo
+      as <span class="mono">state/last_alert.json</span>), so both guarantees survive even though each run starts on a fresh, ephemeral machine.
     </p>
   </section>
 

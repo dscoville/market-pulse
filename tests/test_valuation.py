@@ -3,7 +3,7 @@
 import math
 
 from market_pulse import data
-from market_pulse.signals import evaluate
+from market_pulse.signals import VALUATION_CAP, evaluate
 
 
 def _calm_closes():
@@ -15,13 +15,39 @@ def _calm_closes():
 # Scoring: expensive valuations push the composite toward TRIM / BE FEARFUL.
 # --------------------------------------------------------------------------
 
-def test_expensive_valuation_pushes_toward_fearful():
+def test_expensive_valuation_tilts_toward_fearful_within_cap():
     calm = evaluate(_calm_closes(), vix_closes=[15.0])
     rich = evaluate(_calm_closes(), vix_closes=[15.0], cape=39, buffett_indicator=235)
-    # Adding record-high valuations must move the score meaningfully greedier.
-    assert rich.score < calm.score - 30
+    # Record-high valuations lean greedier, but only as a bounded tilt.
+    shift = calm.score - rich.score
+    assert 10 < shift <= VALUATION_CAP
     keys = {s.key for s in rich.signals}
     assert {"cape", "buffett"} <= keys
+
+
+def _ordinary_bull_near_highs():
+    # Steady ~15%/yr gains with mild wobble: the index sits near its highs,
+    # which is where it spends much of any bull market. Nothing unusual.
+    return [100.0 * math.exp(0.0006 * i + 0.01 * math.sin(i / 7.0)) for i in range(300)]
+
+
+def test_rich_valuation_alone_does_not_make_an_ordinary_bull_market_fearful():
+    # Regression: with CAPE scored at full weight, this read -72 (BE FEARFUL)
+    # and emailed every week the cooldown allowed from July 2026 on.
+    a = evaluate(_ordinary_bull_near_highs(), vix_closes=[15.0], cape=40)
+    assert a.score > -60
+    assert a.stance != "BE FEARFUL"
+
+
+def test_valuation_never_counts_as_corroboration():
+    a = evaluate(_ordinary_bull_near_highs(), vix_closes=[15.0], cape=45, buffett_indicator=240)
+    market_votes = sum(
+        1 for s in a.signals
+        if s.kind == "market" and s.direction == "greed" and abs(s.score) >= 8
+    )
+    if a.action == "TRIM":
+        assert a.corroborating() == market_votes
+    assert all(s.kind == "valuation" for s in a.signals if s.key in {"cape", "buffett"})
 
 
 def test_cheap_valuation_pushes_toward_greedy():
